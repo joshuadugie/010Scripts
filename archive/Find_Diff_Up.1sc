@@ -1,0 +1,56 @@
+//------------------------------------------------
+//--- 010 Editor v3.2.2c Script File
+//
+//      File: Find_Diff_Up.1sc
+//   Authors: Artur Babecki
+//   Version: 1.1
+//   Purpose: Finds the first byte with a different value than 
+//            the current byte. Allows skipping large blocks 
+//            filled with the same byte. Search direction is up.
+//  Category: Search
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2012-07-02 A Babecki: Initial release.
+//
+//  Buffered file reading routine is based on the script IsASCII.1sc
+//  by SweetScape Software
+//------------------------------------------------
+
+const uint  BLOCK_SIZE = 32768;
+uchar buffer[ BLOCK_SIZE ];
+uint64  size, pos,pos2, i;
+uint bufsize;
+uchar c;
+
+pos=GetCursorPos();
+c=ReadByte(pos);
+pos2=pos;
+size=pos;
+
+while( size > 0 )
+{
+    bufsize = size < BLOCK_SIZE ? size : BLOCK_SIZE;
+    ReadBytes( buffer, pos-bufsize, bufsize );
+   
+    for( i = bufsize; i >0; i-- )
+        {
+            if( buffer[i-1] !=c )
+                {
+                    pos += i-bufsize-1;
+                    SetCursorPos( pos );
+                    Printf ("\nDirection \"UP\"\n");
+                    Printf ("Offset                count * [byte code]");
+                    Printf ("\n%.8LXh:     %Lu (%LXh)",pos2,pos2-pos,pos2-pos);
+                    Printf (" * [%.2Xh]\n",c);
+                    return ;
+              
+                }
+
+        }
+   
+    pos  -= bufsize;
+    size -= bufsize;
+}
+
+//-----------------------------------
+

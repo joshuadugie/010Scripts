@@ -1,0 +1,91 @@
+//------------------------------------------------
+//--- 010 Editor v3.0 Script File
+//
+//      File: CopyAsPython.1sc
+//   Authors: Adrian Nicolaiev
+//   Website: http://www.niconnect.com
+//   Version: 1.1
+//   Purpose: Copy selection or entire file as Python code. 
+//            Counts number of bytes and the Python Data Array 
+//            is also copied to the Clipboard.
+//  Category: Clipboard
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   A Nicolaiev: Initial release.
+//------------------------------------------------
+
+const int entire_always = 0;    // 1: do for entire file always, 0: if no selection
+const char newline[] = "\n";    // newline "\n"
+const char tab[] = "\t";        // tabulation "\t"
+
+int64 adr, siz;
+int actfile, newfile, bytpline, i, l;
+string name;
+char c;
+
+// At least, one file must be open
+if (FileCount() == 0) {
+  MessageBox(idOk, "Copy as Python Array", "No file is open.");
+  return -1;
+}
+
+// Do it for entire file if entire_always or no selection available
+if ((entire_always != 0) | (GetSelSize() <= 0)) {
+  adr = 0; siz = FileSize();
+}
+else {
+  adr = GetSelStart(); siz = GetSelSize();
+}
+
+// At least, one byte should be processed
+if (siz == 0) {
+  MessageBox(idOk, "Copy as Pascal Array", "No bytes to process.");
+  return -1;
+}
+
+// convert actual file name to constant name
+name = GetFileName();
+for (i = Strlen(name) - 1; i >= 0; i--) {
+  c = name[i];
+  if ((c == '\\') || (c == ':')) {
+    name = StrDel(name, 0, i + 1); break;  // remove path
+  }
+  else if (!(((c >= '0') && (c <= '9')) ||
+             ((c >= 'A') && (c <= 'Z')) ||
+             ((c >= 'a') && (c <= 'z'))))
+    name[i] = '_';                         // replace non-alphanum
+}
+// create temporary file for to copy to clipboard
+actfile = GetFileNum();
+newfile = FileNew();
+FileSelect(actfile);
+
+// write python data definition
+FPrintf(newfile, "# Copy As Python Array - by Adrian Nicolaiev - www.niconnect.com%s", newline);
+FPrintf(newfile, "# File name: ----------- %s%s", name, newline);
+FPrintf(newfile, "# Number of bytes: ----- %Ld%s%s", siz, newline, newline);
+FPrintf(newfile, "data = [%s %s", newline, tab);
+
+// write array of byte
+bytpline = GetBytesPerLine();
+l = 0;
+while (siz > 0) {
+  FPrintf(newfile, "0x%.2X", ReadUByte(adr)); adr++; siz--; l++;
+  if (siz > 0) {
+    FPrintf(newfile, ", ");
+    if (l >= bytpline) {
+      FPrintf(newfile, "%s%s", newline, tab); l = 0;
+    }
+  }
+}
+// end of array
+FPrintf(newfile, "%s]", newline);
+if (l > 0)
+  FPrintf(newfile, newline);
+
+FileSelect(newfile);
+SetSelection(134, FileSize());
+// copy text to clipboard
+CopyToClipboard();
+MessageBox(idOk, "Copy as Python Array", "Also in the Clipboard.");
+

@@ -1,0 +1,78 @@
+//------------------------------------------------
+//--- 010 Editor v3.2.2 Script File
+//
+//      File: BinToI_IToBin.1sc
+//   Authors: Artur Babecki 
+//   Version: 1.2
+//   Purpose: Functions for converting from a binary string 
+//            to an integer and vise versa. Note that 010 Editor v4
+//            now contains the built-in functions IntToBinaryStr
+//            and BinaryStrToInt.
+//  Category: Utility
+//   History: 
+//   1.2   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.1   2012-07-24 A Babecki: Fixed IToBin for compatibility with 4.x.
+//   1.0   2011-12-13 A Babecki: Initial release.
+//------------------------------------------------
+//
+// 	string IToBin ( uint64 x, uint size)
+//------------------------------------------------
+// converts integer to binary string
+// x integer to be converted, size - size of the returned string
+// Returns a string with binary representation of the x
+// Example of usage:
+// #include "BinToI_IToBin.inc"
+// string s,s1;
+// uint64  x=134517;
+// uchar   x1=123;
+// s=IToBin (x,sizeof(x));
+// s1=IToBin (x,sizeof(x));
+// Printf("\%s\n %s1\n",s,s1);
+//---------------------------------
+
+string IToBin ( uint64 x, uint size)
+{
+    local uchar z[65];
+    local int i;
+
+for (i =0;i<sizeof(x)*8;i++){
+	z[sizeof(x)*8-i-1]=(x&0x01)+48;x=x>>1;}
+
+z=SubStr(z,Strlen(z)-size*8,-1);
+return z;
+}
+
+//-----------------------------------------------------
+
+//	 uint64 BinToI(string str)   
+//----------------------------------------------
+// converts a binary string to uint64
+// and returns result
+//
+// Example of usage :
+// #include "BinToI_IToBin.inc"
+// uint64 k;
+// k=BinToI("10101111");
+// Printf("\n%Ld\n",k);
+
+uint64 BinToI(string str)   
+{
+  local int  c,b,i,j;
+  local uint64  len, x = 0;
+  len = Strlen(str) - 1;
+
+if (len>63){ 
+    MessageBox(idYes,"BinToI error","binary string length>64 \nlength=%d",len+1);
+    return (0);} 
+
+  for(i = 0; i <= len; i++) {
+     c = (str[i] - 0x30); // char to numeric value
+ 
+   if ((c > 1) || (c < 0))   { 
+    MessageBox(idYes,"BinToI error","Wrong characters in binary string: \nstr=\"%s\"",str);
+    return (0);}  
+
+    for(b = 1, j = len; j > i; j--)  {b *= 2;} //power of 2
+
+    x = x + c * b; } //end of for
+   return(x); }

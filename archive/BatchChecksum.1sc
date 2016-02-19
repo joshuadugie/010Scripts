@@ -1,0 +1,71 @@
+//------------------------------------------------
+//--- 010 Editor v2.0.1 Script File
+//
+//      File: BatchChecksum.1sc
+//   Authors: SweetScape Software
+//   Version: 1.1
+//   Purpose: Demonstrates how to batch process a set of files. 
+//            Takes as input a text file containing a list of file 
+//            names, one per line. Opens each file in the list, 
+//            performs processing on the file (in this case does 
+//            an MD5 checksum) and then closes the file.
+//  Category: Checksum
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   SweetScape Software: Initial release.
+//------------------------------------------------
+
+// Which checksum algorithm to perform
+const int ALGORITHM = CHECKSUM_MD5;
+
+// Define variables
+int   len, listfile;
+char  filename[512], listfilename[512];
+char  checksum[512];
+
+// Input text file containing a list of files to process
+listfilename = InputOpenFileName( "Choose List of Files to Checksum", 
+    "Text Files (*.txt)|*.txt|All Files (*.*)|(*.*)" );
+if( Strlen( listfilename ) == 0 )
+    return -1;
+
+// Open text file containing a list of files
+if( FileOpen( listfilename ) < 0 )
+    return -1;
+listfile = GetFileNum();
+
+// Read the list file for a set of file names, each file on a different line
+Printf( "Calculating checksums...\n" );
+while( !FEof()  )
+{
+    // Get file name from list - remove end of line characters
+    filename = ReadLine( FTell() );
+    len = Strlen( filename );
+    FSkip( len );
+    if( len > 0 && filename[len-1] == 0xA )
+         filename[len-1] = 0;
+    if( len > 1 && filename[len-2] == 0xD )
+         filename[len-2] = 0;
+
+    // Attempt to open the file
+    if( FileOpen( filename ) < 0 )
+    {
+         // Failed - close list file
+         FileSelect( listfile );
+         FileClose();
+         Exit( -1 );
+    }
+
+    // Perform operation on the file (checksum)
+    ChecksumAlgStr( ALGORITHM, checksum );
+
+    // Print out results
+    Printf( "%s '%s'\n", checksum, filename );
+
+    // Close file
+    FileClose();
+    FileSelect( listfile );
+}
+
+// Close original list file
+FileClose();

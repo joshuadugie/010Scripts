@@ -1,0 +1,216 @@
+//------------------------------------------------
+//--- 010 Editor Script File
+//
+//      File: CountBlocks.1sc
+//   Authors: Artur Babecki
+//    E-mail: artur@in.krakow.pl, artur.babecki@gmail.com
+//   Version: 2.1
+//   Purpose: This script finds blocks of identical characters 
+//            within the file or within the selection.
+//            Results are stored in bookmarks and printed in the
+//            output pane. Block size is defined by the variable LIMIT.
+//  Category: Binary
+//   History: 
+//   2.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   2.0   2013-10-21 A Babecki: Public release.
+//------------------------------------------------
+
+// Clear all previous bookmarks - comment the next line if you do not want to do it
+
+while (GetNumBookmarks())  RemoveBookmark(0);
+
+//-----------------------------------------------
+
+// COND = set condition   exact block size , or greater then 
+//
+// #define ==
+// #define >=
+//
+
+#define  COND >=
+
+// format string for printed results Printf(PFMT,pos2,counter,c);
+
+#define PFMT "%.8LXh %.8d   %.2X\n"
+
+//
+
+uint  LIMIT=512;                // Block size to be found 
+string sLIMIT;
+// line below may be commented just to use the predefined value above
+
+SPrintf(sLIMIT,"%u",LIMIT );
+LIMIT = InputNumber("Count Blocks of Identical Bytes","Set the minimum size of block \nto be found",sLIMIT );
+if (LIMIT==BAD_VALUE) Exit(-1);
+
+//
+
+uint BUFFSIZE=65535;           // buffer size for reading - may be increased or decreased
+
+//-----------------------------------
+
+uchar buffer[BUFFSIZE];
+uint64 pos,pos2,fsize,counter,blockcount;
+uint64 i,j,k,k_tail;
+
+/* optionally the offsets count and chars of the blocks can  be stored in the arrays for further processing
+   
+#define ARRAY   TRUE
+#define ARRAYSIZE 65535
+uint64 offs [ARRAYSIZE];
+uint64 count[ARRAYSIZE];
+uchar  chars[ARRAYSIZE];
+uint  tab;
+
+*/
+
+
+uchar c;
+uint flag=0;
+counter=1L;
+
+
+
+
+
+
+//--------------------------
+
+fsize=GetSelSize();
+if (fsize==0L) {
+fsize=FileSize();
+
+Printf("\nWhole file used : Size = %.10LXh   %.10Ld\n",fsize,fsize);
+
+}
+else {
+
+ pos=GetSelStart();
+
+Printf("\nSelection used : Start = %.10LX   Size = %.10LXh  %.10Ld\n",pos,fsize,fsize);
+
+}
+
+k=(uint64)fsize/BUFFSIZE;
+k_tail=fsize%BUFFSIZE;
+
+Printf("\n\n  Offset   Count    Char\n");
+
+
+//--------------------------
+
+for (j=0;j<k;j++)
+{
+   ReadBytes(buffer,pos,BUFFSIZE);
+  f();
+  pos+=BUFFSIZE;
+}
+
+if (k_tail>0)
+  { 
+    BUFFSIZE=k_tail;
+    ReadBytes(buffer,pos-BUFFSIZE+k_tail,BUFFSIZE);
+    f();
+   }
+
+
+pos2=pos+i-counter+2;
+
+if (counter+2>=LIMIT)
+  {
+    
+     counter--;
+     AddBookmark(pos2,"BlockCount","uchar",counter);
+     Printf(PFMT,pos2,counter,c);
+     
+     #ifdef ARRAY
+     if (tab<=ARRAYSIZE chars[tab]=c; offs[tab]=pos2;count[tab]=counter;tab++;
+     #endif
+
+    }
+
+//----------------------------------------------------------------------------------------------------------
+// All job done - it is the place for further processing if needed
+
+
+ Printf("\nNumber of blocks found: %d ",blockcount);
+ 
+
+
+/*These commnted lines are just to check the arrays(if used) with offsets,counts,and chars 
+  #ifdef ARRAY
+  for (j=0;j<tab;j++)
+     {
+       Printf("ARRAY:%.8LX %.8d %.2X\n",offs[j],count[j],chars[j]);
+      }
+  #endif
+*/
+
+SetCursorPos(0);
+
+//-----------------------------------------------------------------------------------------------------------
+
+
+void f()
+{
+
+	if (flag==1) 
+	  {
+ 
+         if (c!=buffer[0]) 
+	   { 
+	     counter --;
+             if (counter>=LIMIT)
+               {
+           
+                pos2=pos-counter+1;
+                AddBookmark(pos2,"BlockCount","uchar",counter);
+                Printf(PFMT,pos2,counter,c);
+                blockcount++;
+
+               #ifdef ARRAY
+                 if (tab<=ARRAYSIZE)   chars[tab]=c; offs[tab]=pos2;count[tab]=counter;tab++;
+	                           
+               #endif
+                }
+                       
+                 counter=1; 
+            }
+           }
+ 
+
+
+for  (i=0; i<BUFFSIZE-1;i++) {
+                
+      if (buffer[i]==buffer[i+1])  {counter++;}
+ 
+       else{        
+
+             
+             if (counter>=LIMIT)
+               {
+              
+                 pos2= pos+i-counter+1; 
+                 AddBookmark(pos2,"BlockCount","uchar",counter);  
+                 Printf(PFMT,pos2,counter,buffer[i]);
+                 blockcount++;
+
+                #ifdef ARRAY
+	         if (tab<=ARRAYSIZE) chars[tab]=buffer[i];offs[tab]=pos2;count[tab]=counter;tab++;
+	        #endif
+
+               }
+
+             counter=1;
+
+           }
+}
+
+
+c=buffer[i];
+flag=1;
+counter++;
+
+}
+
+/*-----------------------------------------------------------------------*/

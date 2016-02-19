@@ -1,0 +1,107 @@
+//------------------------------------------------
+//--- 010 Editor v3.0 Script File
+//
+//      File: DecodeBase64.1sc
+//   Authors: Bernhard Foltz
+//   Version: 1.1
+//   Purpose: Decode the selected bytes or the entire file from Base64 
+//            code into binary. Base64 is a code used in email attachments 
+//            or similar purposes, for to transfer binary data, where only 
+//            ASCII data can be transmitted. In each character are placed 
+//            6 bits. This script extracts from the characters the least 
+//            significant 6 bits and puts it together to whole bytes.
+//            Note that some of this functionality is now built directly 
+//            into 010 Editor.
+//  Category: Binary
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2009-07-05 B Foltz: Initial release.
+//
+// Test procedure:
+// Copy the following text into a new file:
+//   RGFzIGlzdCBlaW4gVGVzdC4NClRoaXMgaXMgYSB0ZXN0Lg0K=
+// Then run this script. The result should appear under a new tab:
+//   Das ist ein Test.
+//   This is a test.
+//
+// SweetScape Note: Some of this functionality is now 
+//      built directly into 010 Editor by using the statement:
+//          ImportFile( IMPORT_BASE64, GetFileName() );
+//      or using 'Edit > Paste From > Paste from Base64'.
+//      This script is included in the archive as it is a useful
+//      for learning about base64.
+//------------------------------------------------
+
+const int entire_always = 0;    // 1: do for entire file always, 0: if no selection
+const string title = "Decode Base64";
+
+int64 adr, siz, out;
+int actfile, newfile, data, bits;
+ubyte b;
+string s;
+
+// At least, one file must be open
+if (FileCount() == 0) {
+  MessageBox(idOk, title, "No file is open.");
+  return -1;
+}
+
+// Do it for entire file if entire_always or no selection available
+if ((entire_always != 0) | (GetSelSize() <= 0)) {
+  adr = 0; siz = FileSize();
+}
+else {
+  adr = GetSelStart(); siz = GetSelSize();
+}
+
+// At least, one byte should be processed
+if (siz == 0) {
+  MessageBox(idOk, title, "No bytes to process.");
+  return -1;
+}
+
+// create new file
+actfile = GetFileNum();
+newfile = FileNew();
+FileSelect(actfile);
+// read data, 6 bits per input byte
+data = 0; bits = 0; out = 0;
+while (siz > 0) {
+  b = ReadUByte(adr); adr++; siz--;
+  if ((b >= 'A') && (b <= 'Z')) {
+    data = (data << 6) | (b - 'A'); bits += 6;
+  } 
+  else if ((b >= 'a') && (b <= 'z')) {
+    data = (data << 6) | (b - 'a' + 26); bits += 6;
+  } 
+  else if ((b >= '0') && (b <= '9')) {
+    data = (data << 6) | (b - '0' + 52); bits += 6;
+  } 
+  else if ((b == '+') || (b == '-')) {
+    data = (data << 6) | 62; bits += 6;
+  }
+  else if ((b == '/') || (b == '_')) {
+    data = (data << 6) | 63; bits += 6;
+  }
+  else if (b > ' ') {
+    siz = -1;
+    break;
+  }
+  // write data
+  if (bits >= 8) {
+    bits -= 8;
+    FileSelect(newfile);
+    WriteUByte(out, data >> bits); out++;
+    FileSelect(actfile);
+  }
+}
+// end of input
+if (siz == 0) 
+  MessageBox(idOk, title, "Terminating '=' not found. End of file or selection.");
+else if (b != '=') {
+  SPrintf(s, "Invalid character: '%c'. Decoder stop.", b);
+  MessageBox(idOk, title, s);
+}
+// new file ready
+FileSelect(newfile);
+SetCursorPos(FileSize());

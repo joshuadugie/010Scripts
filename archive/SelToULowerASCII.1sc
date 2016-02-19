@@ -1,0 +1,35 @@
+//------------------------------------------------
+//--- 010 Editor v3.2.2 Script File
+//
+//      File: SelToULowerASCII.1sc
+//   Authors: Artur Babecki
+//   Version: 1.1
+//   Purpose: Sets the first letter of the selection to upper case 
+//            and all following letters to lower case.
+//            Note this functionality is now built into 010 Editor
+//            using 'Format > Capitalize'.
+//  Category: Text
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2012-02-24 A Babecki: Initial release.
+//------------------------------------------------
+
+SelToULowerASCII();
+//-----------------------------------
+void SelToULowerASCII()
+{
+    local int64 sel,start;
+    local uchar buf[1024];
+    local int i;
+    sel=GetSelSize();
+    start=GetSelStart();
+    ReadBytes(buf,start,sel) ;
+    if ( buf[0]>='a' && buf[0]<='z')
+           buf[0]-=0x20;
+for (i=1;i<sel-1;i++) {
+    if ( buf[i]>='A' && buf[i]<='Z'){
+      buf[i]+=0x20;}
+     WriteBytes( buf,start,sel );
+    }
+}
+//------------------------------------------------

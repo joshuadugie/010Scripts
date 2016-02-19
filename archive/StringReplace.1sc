@@ -1,0 +1,48 @@
+//------------------------------------------------
+//--- 010 Editor v3.0.5 Script File
+//
+//      File: StringReplace.1sc
+//   Authors: Aaron DM
+//   Website: www.aarondm.com
+//   Version: 1.1
+//   Purpose: Utility function for searching for a value 
+//            within a string and replacing it with another value.
+//  Category: Search
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   Aaron DM: Initial release.
+//
+// Search for a word/phrase/letter/character and replace it with another char
+// @str_return  1 = return original value if nothing was replaced
+//              0 = return null/empty if nothing was replaced. Use Strlen() to check!
+// @result  string
+//------------------------------------------------
+string str_replace(char search_var[64], char replace_var[64], string value, int str_return)
+{
+
+    int val_len = Strlen(search_var);
+    int str_index, x;
+
+    string rename_final, rename;
+   
+    while(Strstr(value, search_var) != -1)
+    {
+        str_index = Strstr(value, search_var);
+        if(str_index > 0) {
+            Strncpy(rename_final, value, str_index);
+        }
+        rename_final += replace_var;
+        rename = SubStr(value, str_index+Strlen(search_var), 0);
+        str_index += Strlen(search_var);
+        value = rename_final += rename;
+    }
+   
+    if(str_return == 1) {
+        if(Strlen(rename) <= 0) {
+            rename_final = value;
+        }
+    }
+
+    return rename_final;
+  
+}

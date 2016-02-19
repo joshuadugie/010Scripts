@@ -1,0 +1,43 @@
+//------------------------------------------------
+//--- 010 Editor v6.0.1 Script File
+//
+//      File: Find_Diff_Down_RE.1sc
+//   Authors: Artur Babecki
+//   Version: 1.1
+//   Purpose: Finds the first byte which differs from the byte 
+//            under current cursor position. Allows to skip large blocks 
+//            filled with the same value. This version searches down 
+//            and uses regular expressions.
+//  Category: Search
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2015-02-18 A Babecki: Initial release.
+//------------------------------------------------
+RequiresVersion(6);
+#define SELECTION 1
+uchar c;
+string str;
+uint64 p,pc0,pc;
+uint64 fsize;
+fsize=FileSize();
+
+Printf ("\n\nSearching \"DOWN\"\n\n");
+pc0=pc=GetCursorPos();
+if (pc>fsize-1) {Printf ("END of file - nothing to do");return;}
+
+c=ReadByte(pc);
+Printf ("current byte          %.2Xh",c);
+Printf ("\nstarted from offset   %.8LXh  \n",pc);
+SPrintf(str,"[^\\x%.2x,h]",c);
+pc=FindFirst(str,true,false,FINDMETHOD_REGEX,0.0,1,pc,0,24) ;
+
+if(pc==-1L) {pc=fsize; SetCursorPos(pc);
+Printf ("\nEND of file reached \n");
+}else {SetCursorPos(pc);}
+
+p=pc-pc0;        
+Printf ("stopped at offset     %.8LXh\n",pc);    
+Printf ("number of bytes       %Lu (%.8LXh)\n",p,p);
+if(SELECTION) SetSelection(pc0,p);
+return ;
+//--------------------------------------------------------------

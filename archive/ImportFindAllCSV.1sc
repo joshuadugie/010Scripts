@@ -1,0 +1,94 @@
+//------------------------------------------------
+//--- 010 Editor Script File
+//
+//      File: ImportFindAllCSV.1sc
+//   Authors: Artur Babecki
+//    E-mail: artur@in.krakow.pl,artur.babecki@gmail.com
+//   Version: 1.1
+//   Purpose: Imports a CSV file exported from a Find All 
+//            operation and creates bookmarks for each occurrence.
+//  Category: Search
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2012-12-02 A Babecki: Initial release.
+//
+// Decimal and hexadecimal addressing is detected.
+// If the offsets exceed the file size the number of bookmarks
+// is truncated.
+//------------------------------------------------
+// uncomment the line below if you want to clear previous bookmarks
+// while (GetNumBookmarks())  RemoveBookmark(0);
+//------------------------------------------------
+#define LINELENGTH 2048
+//prefix and suffix for bookmark names - suffix= format for offset of hits
+#define PREFIX "FindAll_"
+#define SUFFIX "_%.8LX"
+
+uchar buff[LINELENGTH];
+string bkoffset;
+string bname;
+int i,n,k,numlines;
+string f0,f1;
+int fn0,fn1;
+uint64 fsize;
+RequiresVersion(4,0,0);
+fn0=GetFileNum();
+fsize=FileSize();
+f0=GetFileName();
+f1=InputOpenFileName("Import Find results (CSV)",    "All files (*.*)|",    "" );
+
+fn1=FileOpen(f1,false,"Text",false);
+FileSelect(fn1);
+uint64 offset;
+numlines=TextGetNumLines();
+
+Printf ("\nTarget file:                       %s \nCSV file with FindAll results:     %s",f0,f1);
+for(i=2;i<numlines-1;i++) {
+    TextReadLine(buff,i,LINELENGTH);
+    n=Strchr(buff,',');
+    if(buff[n-1]=='h') {
+        SScanf(buff,"%LX",offset);
+        SPrintf(bkoffset,SUFFIX,offset);
+        if(offset>fsize){
+            Printf("\n\nWARNING: ");
+            Printf("Offsets exceed the file size: the bookmarks are truncated.\n");
+            Printf("          File size:    %.10Ld (%.10LXh)\n          Offset found: %.10Ld (%.10LXh)" ,fsize,fsize,offset,offset);
+            Printf("\n\n%d from %d bookmark(s) added",k,numlines-3);
+            FileSelect(fn0);
+            return;
+            }
+
+            FileSelect(fn0);
+            f();
+            FileSelect(fn1);
+        }
+        else {
+            SScanf(buff,"%Ld",offset);
+            SPrintf(bkoffset,SUFFIX,offset);
+        if(offset>fsize){
+            Printf("\n\nWARNING: ");
+            Printf("Offsets exceed the file size: the bookmarks are truncated.\n");
+            Printf("          File size:    %.10Ld (%.10LXh)\n          Offset found: %.10Ld (%.10LXh)" ,fsize,fsize,offset,offset);
+            Printf("\n\n%d from %d bookmark(s) added",k,numlines-3);
+            FileSelect(fn0);
+            return;
+            }
+
+            FileSelect(fn0);
+            f();
+            FileSelect(fn1);
+            }
+}
+
+Printf("\n\n%d from %d bookmark(s) added",k,numlines-3);
+FileSelect(fn0);
+
+
+
+//------------------------------------------
+void f()
+{
+bname=PREFIX+bkoffset;
+AddBookmark(offset,bname,"uchar");
+k++;
+}

@@ -1,0 +1,39 @@
+//------------------------------------------------
+//--- 010 Editor v3.2.2 Script File
+//
+//      File: sWeEtSCApE.1sc
+//   Authors: Artur Babecki
+//   Version: 1.1
+//   Purpose: Creates all upper/lower case combinations 
+//            of a string and writes them to a file.
+//  Category: Text
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2012-01-18 A Babecki: Initial release.
+//------------------------------------------------
+
+string name,name2;
+uint i,j,k,l,len;
+uint fp;
+fp=FileNew();
+
+name= InputString("All upper/lower case combinations of the string","Input string ","");
+
+name2=name;
+
+len=Strlen (name);
+for(i=0;i<len;i++){
+    name[i] = (name[i] <= 'z' && name[i] >= 'a') ? name[i]-('a'-'A') : name[i];
+}
+
+for (i=0;i< (uint)Pow(2,len);i++) {
+    for(j=0;j<len;j++){
+        k= ((i>>j)& 1)<<5;
+        name2[j] = (name[j] <= 'Z' && name[j] >= 'A') ? (name2[j]=name[j] +k) : name2[j];
+
+        }
+    FPrintf( fp,"%s\r\n",name2);
+
+    };
+
+FileSave(name2+".txt");

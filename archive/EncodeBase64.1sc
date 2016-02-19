@@ -1,0 +1,96 @@
+//------------------------------------------------
+//--- 010 Editor v3.1.2 Script File
+//
+//      File: EncodeBase64.1sc
+//   Authors: uuMonkey.ljz
+//    E-mail: uuMonkey.ljz@gmail.com
+//   Version: 1.1
+//   Purpose: Encode bytes to Base64. Note this functionality
+//            is now included in 010 Editor using 'Copy >
+//            Copy As > Copy as Base64' or 'File > Export Hex'.
+//  Category: Binary
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   uuMonkey: Initial release.
+//
+// Reference:See DecodeBase64.1sc
+//------------------------------------------------
+const int entire_always = 0;    // 1: do for entire file always, 0: if no selection
+const string title = "Encode Base64";
+
+int64 adr, siz, out;
+int actfile, newfile,  bits;
+ubyte b;
+char data[3] ={0};
+string s;
+const UBYTE char_map[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+// At least, one file must be open
+if (FileCount() == 0) {
+  MessageBox(idOk, title, "No file is open.");
+  return -1;
+}
+
+// Do it for entire file if entire_always or no selection available
+if ((entire_always != 0) | (GetSelSize() <= 0)) {
+  adr = 0; siz = FileSize();
+}
+else {
+  adr = GetSelStart(); siz = GetSelSize();
+}
+
+// At least, one byte should be processed
+if (siz == 0) {
+  MessageBox(idOk, title, "No bytes to process.");
+  return -1;
+}
+
+// create new file
+actfile = GetFileNum();
+newfile = FileNew();
+FileSelect(actfile);
+bits = 0; out = 0;
+int len = 0;
+
+for(len = siz; len >=3; len -=3)
+{
+    FileSelect(actfile);
+    data[0] = ReadByte(adr++);
+    data[1] = ReadByte(adr++);
+    data[2] = ReadByte(adr++);
+    FileSelect(newfile);
+    WriteByte(out, char_map[(data[0]&0xFC)>>2]); out++;
+    WriteByte(out, char_map[((data[0]&0x03)<<4)| ((data[1]&0xF0)>>4)]); out++;
+    WriteByte(out, char_map[((data[1]&0x0F)<<2)| ((data[2]&0xC0)>>6)]); out++;
+    WriteByte(out, char_map[data[2] & 0x3F]); out++;
+    data[0]=data[1]=data[2]=0;
+    FileSelect(actfile);
+}
+if(len == 2)
+{
+    FileSelect(actfile);
+    data[0] = ReadByte(adr++);
+    data[1] = ReadByte(adr++);
+    FileSelect(newfile);
+    WriteByte(out, char_map[(data[0]&0xFC)>>2]); out++;
+    WriteByte(out, char_map[((data[0]&0x03)<<4)| ((data[1]&0xF0)>>4)]); out++;
+    WriteByte(out, char_map[(data[1] & 0x0f)<<2]); out++;
+    WriteByte(out, 0x3D); out++;
+    data[0]=data[1]=data[2]=0;
+    FileSelect(actfile);
+}
+if(len == 1)
+{
+    FileSelect(actfile);
+    data[0] = ReadByte(adr++);    
+    FileSelect(newfile);
+    WriteByte(out, char_map[(data[0]&0xFC)>>2]); out++;
+    WriteByte(out, char_map[(data[0]&0x03)<<4]);out++;
+    WriteByte(out, 0x3D); out++;
+    WriteByte(out, 0x3D); out++;
+}
+
+
+FileSelect(newfile);
+SetCursorPos(FileSize());   
+
+    

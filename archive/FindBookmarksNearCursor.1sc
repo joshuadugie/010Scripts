@@ -1,0 +1,68 @@
+//------------------------------------------------
+//--- 010 Editor v4.0.3 Script File
+//
+//      File: FindBookmarksNearCursor.1sc
+//   Authors: Artur Babecki
+//    E-mail: artur.babecki@gmail.com
+//   Version: 1.1
+//   Purpose: Finds the nearest bookmarks to the cursor. Places 
+//            the cursor at the previous bookmark and optionally 
+//            selects bytes to the next bookmark.
+//  Category: Bookmarks
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2012-11-30 A Babecki: Initial release.
+//------------------------------------------------
+//START MAIN
+
+#define SELECT 1  //  set it to 0 for no select
+
+uint64 pC,pB,pB0;
+int  i,nB;
+Printf("\n[Bookmarks near the current cursor position]\n\n");
+pC=GetCursorPos();
+
+
+nB=GetNumBookmarks(); 
+
+if (nB==0) {Printf("\nNo bookmarks found\n"); return; }
+
+
+
+for (i=0;i<nB;i++)
+{
+    pB=GetBookmarkPos(i);
+
+    if(pB>=pC) 
+    {
+        if (i==0) {
+        Printf ("Current cursor position:           %.10Ld %.10LXh\n\n",pC,pC);
+        Printf("No bookmark before current cursor position\n");
+        Printf("Lower bookmark position:           %.10LXh\n\n",pB);
+        Printf("Distance from cursor to lower bookmark:  %.10Ld %.10LXh\n",pB-pC,pB-pC);   
+        return;  }
+        else  {
+        pB0=GetBookmarkPos(i-1);
+        Printf ("Current cursor position:     %.10Ld %.10LXh\n\n",pC,pC);
+        Printf("Upper bookmark position:     %.10LXh\n",pB0);
+        Printf("Lower bookmark position:     %.10LXh\n\n",pB);
+        Printf("Area length between bookmarks:  %.10Ld %.10LXh\n\n",pB-pB0,pB-pB0);
+        Printf("Distance from cursor to upper bookmark: %.10Ld %.10LXh\n",pC-pB0,pC-pB0);
+        Printf("Distance from cursor to lower bookmark: %.10Ld %.10LXh\n",pB-pC,pB-pC);   
+
+//
+        if (SELECT) SetSelection( pB0, pB-pB0 );
+//
+  
+        SetCursorPos(pB0);
+        return;
+        }
+    }
+}
+Printf("Current cursor position:           %.10Ld %.10LXh\n\n",pC,pC);
+Printf("Upper bookmark position:           %.10LXh\n",GetBookmarkPos(i-1));
+Printf("No bookmark after current cursor position\n\n");
+Printf("Distance from cursor to upper bookmark:   %.10Ld %.10LXh\n",pC-pB0,pC-pB0);
+
+// END CODE
+//-----------------------------------------------------------------------------------------

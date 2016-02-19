@@ -1,0 +1,127 @@
+//------------------------------------------------
+//--- 010 Editor v3.0.5 Script File
+//
+//      File: EbookClean.1sc
+//   Authors: tankl
+//    E-mail: tankl#yeah.net
+//   Version: 1.1
+//   Purpose: Erase repeated BLANK_LINES, BLANKs or lines 
+//            including selected texts in files.
+//  Category: Text
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   tank1: Initial release.
+//------------------------------------------------
+
+const int entire_always = 0;    // 1: do for entire file always, 0: if no selection
+const string title = "Ebook Clean";
+
+int64 adr, siz, out;
+int i, len;
+uchar sbuffer[1024] ="";
+siz=0;
+
+// At least, one file must be open
+if (FileCount() == 0) {
+  MessageBox(idOk, title, "No file is open.");
+  myGetFileTodo();
+}
+// Do common clean if no selection available
+if (FileCount() != 0)
+{
+if ((entire_always != 0) | (GetSelSize() <= 0)) {
+  adr = 0; siz = FileSize();
+  Printf("doCommonReplace.\n");
+  for(i=FileCount()-1;i>=0;i--) doCommonReplace(i);
+}
+else {
+  adr = GetSelStart();
+  siz = GetSelSize();
+  if (siz>1024)
+    {
+        Printf("Selection OverSized!\n");
+        return -1;
+    }
+  ReadBytes( sbuffer, adr, siz );
+  Printf("GetSelected:");
+  for(len = 0; len <Strlen(sbuffer); len +=1) Printf("%02X",sbuffer[len]);
+  for(i=FileCount()-1;i>=0;i--) doSelectedReplace(sbuffer,i);
+}
+}
+
+// At least, one byte should be processed
+if (siz == 0) {
+  MessageBox(idOk, title, "No file to process.");
+}
+Printf("BYE!");
+
+void myGetFileTodo()
+{
+    int i;
+    //ubyte filename_t[1024]="";
+    string filenames="";
+    TOpenFileNames f = InputOpenFileNames( "Ebook Files To Clean", "Ebook Files (*.txt)" );
+    for( i = 0; i < f.count; i++ )
+    {
+        filenames=f.file[i].filename;
+        //ConvertASCIIToUNICODE( Strlen(filenames),filenames, filename_t, false);
+        Printf("FileOpen(\"%s\")\n", filenames);
+        if (filenames!="" &&(FileOpen(filenames)<0)) Printf("File open error!\n");
+    }
+}
+
+void doCommonReplace(int actfile)
+{
+int out = 0;
+
+myFileSelect(actfile);
+SetCursorPos(0);
+
+Printf("(%d):%s",actfile,GetFileName());
+out += myReplaceAll("0A0A,h", "0A,h");
+out += myReplaceAll("0D0A20202020,h", "0D0A,h");
+out += myReplaceAll("200D0A,h", "0D0A,h");
+out += myReplaceAll("0D0A0D0A,h", "0D0A,h");
+Printf("\nTotal %d places proceeded!\n",out);
+}
+
+//clean lines that include sbuffer string
+void doSelectedReplace(uchar sbuffer[],int actfile)
+{
+int out = 0;
+int len=0;
+string tbuffer;
+
+myFileSelect(actfile);
+SetCursorPos(0);
+
+Printf("\ndoSelectedReplace(%d):%s\n",actfile,GetFileName());
+SPrintf(tbuffer,"%s","0D0A**");
+for(len = 0; len <Strlen(sbuffer); len +=1) SPrintf(tbuffer,"%s%X",tbuffer,sbuffer[len]);
+SPrintf(tbuffer,"%s**0D0A,h",tbuffer);
+Printf("Search String:%s\n",tbuffer);
+out = ReplaceAll(tbuffer, "0D0A,h", true, false, true, 0.0, 1, 0, 0, false );
+Printf("Total %d places replaced!\n",out);
+}
+
+int myReplaceAll(const string sstr,const string dst)
+{
+int i=0;
+int out=0;
+
+Printf("\n{%s}",sstr);
+do
+{
+  i=ReplaceAll( sstr, dst, true, false, false, 0.0, 1, 0, 0, false );
+  if(i>0) {Printf("x%d",i);out += i;}
+}
+while (i>0);
+return(out>0?out:0);
+}
+
+void myFileSelect(const int actfile)
+{
+LittleEndian();
+DisableUndo();
+FileSelect(actfile);
+}

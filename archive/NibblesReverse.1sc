@@ -1,0 +1,58 @@
+//------------------------------------------------
+//--- 010 Editor v3.1 Script File
+//
+//      File: NibblesReverse.1sc
+//   Authors: n0va8o
+//    E-mail: n0va8o.lau@gmail.com
+//   Version: 1.2
+//   Purpose: Reverse nibbles of data. Eg. DF C2 A1 --->to ---> FD 2C 1A.
+//  Category: Binary
+//   History: 
+//   1.2   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.1   n0va8o: Initial release.
+//------------------------------------------------
+
+const int entire_always = 0;    // 1: do for entire file always, 0: if no selection
+const string title = "Nibbles Reverse";
+
+int64 adr, siz, out;
+int actfile, newfile,  bits;
+uchar tmp;
+unsigned char rnibbles;
+if (FileCount() == 0) {
+  MessageBox(idOk, title, "No file is open.");
+  return -1;
+}
+
+if ((entire_always != 0) || (GetSelSize() <= 0)) {
+  adr = 0; siz = FileSize();
+}
+else {
+  adr = GetSelStart(); siz = GetSelSize();
+}
+
+if (siz == 0) {
+  MessageBox(idOk, title, "No bytes to process.");
+  return -1;
+}
+
+actfile = GetFileNum();
+newfile = FileNew("Hex");
+FileSelect(actfile);
+bits = 0; out = 0;
+int index = adr;
+//Reverse String...
+while( index <= adr + siz-1)
+{
+    FileSelect(actfile);
+    tmp = ReadByte(index);
+    FileSelect(newfile);
+    rnibbles=(0xff&(tmp<<4))|(0xff &(tmp>>4));
+//    Printf("%X, %X, %c\n", tmp, rnibbles, tmp);
+    WriteByte(out, rnibbles);
+    index++;
+    out++;
+}
+
+FileSelect(newfile);
+SetCursorPos(FileSize());  

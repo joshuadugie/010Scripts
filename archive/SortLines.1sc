@@ -1,0 +1,87 @@
+//------------------------------------------------
+//--- 010 Editor v3.1.2 Script File
+//
+//      File: SortLines.1sc
+//   Authors: Alec Ginsburg
+//   Version: 1.1
+//   Purpose: Sort (and optionally remove duplicate) lines 
+//            in a text file in ascending order.
+//  Category: Text
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   A Ginsburg: Initial release.
+//------------------------------------------------
+
+int maxLineSize = 1024;
+
+// sort the lines in the file
+void sortLines(int removeDuplicates)
+{
+    int fileSize = FileSize();
+    char line1[maxLineSize];
+    char line2[maxLineSize];
+    int pos1 = 0;
+    int pos2;
+    int len1;
+    int len2;
+    int temp;
+
+    while (pos1 < fileSize)
+    {
+        // read in the first line
+        Strcpy(line1, ReadLine(pos1));
+        len1 = Strlen(line1);
+        
+        pos2 = pos1 + len1;
+
+        // compare it to all the lines after it
+        while (pos2 < fileSize)
+        {
+            Strcpy(line2, ReadLine(pos2));
+            len2 = Strlen(line2);
+            
+            // check to see if line2 is a duplicate of line1
+            if (removeDuplicates && Strcmp(line1, line2) == 0)
+            {
+                // remove line2
+                DeleteBytes(pos2, len2);
+                pos2 -= len2;
+                fileSize -= len2;
+            }
+            // check to see if line2 should be before line1
+            else if (Strcmp(line1, line2) > 0)
+            {
+                // we need to swap the two lines in the file
+
+                // copy line2 into line1's old spot
+                DeleteBytes(pos1, len1);
+                InsertBytes(pos1, len2);
+                WriteString(pos1, line2);
+
+                // adjust pos2 to take into account the buffer shift above
+                pos2 += (len2 - len1);
+
+                // copy line1 into line2's old spot
+                DeleteBytes(pos2, len2);
+                InsertBytes(pos2, len1);
+                WriteString(pos2, line1);
+
+                // swap the lengths around
+                temp = len2;
+                len2 = len1;
+                len1 = temp;
+
+                // swap our internal buffers around
+                Strcpy(line1, ReadLine(pos1));
+                Strcpy(line2, ReadLine(pos2));
+            }
+            pos2 += len2;
+        }
+        pos1 += len1;
+    }
+}
+
+int choice = MessageBox(idYes | idNo, "User Options", "Do you want to eliminate duplicate lines?");
+sortLines(choice == idYes);
+MessageBox(idOk, "Results", "File contains %u bytes.", FileSize());
+

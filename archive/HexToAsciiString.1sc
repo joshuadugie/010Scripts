@@ -1,0 +1,59 @@
+//------------------------------------------------
+//--- 010 Editor v3.2.2 Script File
+//
+//      File: HexToAsciiString.1sc
+//   Authors: N0VA8o
+//    E-mail: N0VA8o.lau@gmail.com
+//   Version: 1.1
+//   Purpose: Convert hex data to ascii string. 
+//            Eg. 01020304 -> "\x01\x02\x03\x04".
+//  Category: Utility
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   N0VA8o: Initial release.
+//------------------------------------------------
+
+const int entire_always = 0;    // 1: do for entire file always, 0: if no selection
+const string title = "Hex To Ascii String";
+string s;
+string sout;
+int64 adr, siz, out;
+int actfile, newfile,  bits;
+char tmp;
+unsigned char rnibbles;
+if (FileCount() == 0) {
+  MessageBox(idOk, title, "No file is open.");
+  return -1;
+}
+
+if ((entire_always != 0) | (GetSelSize() <= 0)) {
+  adr = 0; siz = FileSize();
+}
+else {
+  adr = GetSelStart(); siz = GetSelSize();
+}
+
+if (siz == 0) {
+  MessageBox(idOk, title, "No bytes to process.");
+  return -1;
+}
+
+actfile = GetFileNum();
+newfile = FileNew();
+FileSelect(actfile);
+bits = 0; out = 0;
+int index = adr;
+
+while( index <= adr + siz-1)
+{
+    s = "";
+    FileSelect(actfile);
+    tmp = ReadByte(index);
+    FileSelect(newfile);
+    SPrintf(s, "\\x%.2X", tmp &0xFF);
+    sout += s;
+    index++;
+}
+WriteString(0, "str_temp = \"" + sout + "\"");
+FileSelect(newfile);
+SetCursorPos(FileSize());  

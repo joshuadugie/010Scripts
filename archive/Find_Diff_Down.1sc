@@ -1,0 +1,60 @@
+//------------------------------------------------
+//--- 010 Editor v3.2.2 Script File
+//
+//      File: Find_Diff_Down.1sc
+//   Authors: Artur Babecki
+//   Version: 1.1
+//   Purpose: Finds the first byte with a different value than 
+//            the current byte. Allows to skip large blocks 
+//            filled with the same value. Search direction is down.
+//  Category: Search
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2012-07-02 A Babecki: Initial release.
+//
+//  Buffered file reading routine is based on the script IsASCII.1sc
+//  by SweetScape Software
+//------------------------------------------------
+
+const uint  BLOCK_SIZE = 32768;
+uchar buffer[ BLOCK_SIZE ];
+uint64  fsize,size, pos,i,pos2;
+uint bufsize;
+uchar c;
+
+pos2=pos=GetCursorPos();
+c=ReadByte(pos);
+fsize = FileSize();
+size=fsize-pos;
+
+while( size > 0 )
+{
+ 
+    bufsize = size < BLOCK_SIZE ? size : BLOCK_SIZE;
+    ReadBytes( buffer, pos, bufsize );
+
+ for( i = 0; i < bufsize; i++ )
+    {
+        if( buffer[i] !=c )
+            {
+                pos +=i;
+                SetCursorPos( pos );
+                Printf ("\nDirection \"DOWN\"\n");
+                Printf ("Offset                count * [byte code]");
+                Printf ("\n%.8LXh:     %Lu (%LXh)",pos2,pos-pos2,pos-pos2);
+                Printf (" * [%.2Xh]\n",c);
+                return ;
+            }
+    }
+   
+    pos  += bufsize;
+    size -= bufsize;
+}
+
+
+
+
+
+
+
+//-----------------------------------

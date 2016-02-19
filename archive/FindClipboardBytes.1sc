@@ -1,0 +1,91 @@
+//------------------------------------------------
+//--- 010 Editor v5.0a Script File
+//
+//      File: FindClipboardBytes.1sc
+//   Authors: Artur Babecki
+//    E-mail: artur.babecki@gmail.com
+//   Version: 1.1
+//   Purpose: Find the first occurrence of the bytes stored in 
+//            the clipboard. The bytes found are selected and 
+//            the cursor is positioned after or before the 
+//            selection according to the search direction.
+//  Category: Search
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2014-07-22 A Babecki: Initial release.
+//------------------------------------------------
+
+int MAXSIZE=15000;  // maximum bytes to be searched
+
+// range and direction
+int ALL = 0;         //default set for the first occurence down      
+int DIR = 1;   
+// ALL=0  DIR=1   find first occurence from the current cursor position going down to the end of the file   
+// ALL=0  Dir=-1  find first occurence from the current cursor position going up to the start of the file   
+// ALL=1  DIR=1   find first occurence from the start of the file going down to the end of the file   
+// ALL=1  DIR=-1  find first occurence from the end  of the file going down to the start of the file   
+
+
+uint64 start,end,pos;
+uchar buff[MAXSIZE];
+uint64 n;
+uint64 i;
+uint Fg,Bg;
+Fg=cWhite;
+Bg=0x9944CC;
+
+
+n=GetClipboardBytes( buff,MAXSIZE);
+
+if (n==0)
+{
+	Printf("\n0 bytes in clipboard. Exit.\n",n);
+	return ;
+}
+
+uchar buff2[n];   // tuning the buffers size  - required for the FindFirst function.
+n=GetClipboardBytes( buff2,n);
+Printf("\n%Lu bytes from clipboard used as a pattern\n",n);
+
+start=0;
+end=0;
+
+if (ALL == 0)           {
+start=GetCursorPos();
+}
+else { start=0; }
+
+if (DIR==-1)
+{
+start=0;
+end=GetCursorPos();
+}
+
+if (ALL==0){
+
+    Printf("Search starts from the position %.8LXh\n",start);
+    if (DIR==1)    {
+        Printf("Searching down to the end of the file  \n");
+                }
+    else {Printf("Searching up to the beginnig of the file \n");}
+
+} 
+else
+{ Printf("Searching for first occurence from the begining of file\n");}
+
+Printf("Pattern found at:\n");
+
+pos = FindFirst(buff2,false,false,false,0.0,DIR,start,end); 
+
+if (pos!=-1L)    {
+Printf("%.8LXh\n",pos);
+SetSelection(pos,n);
+if(DIR==1)
+{
+SetCursorPos(pos+n); 
+} else {SetCursorPos(pos-1); }
+}
+else 
+{Printf("\nPattern not found\n");}
+
+//------------------------------------------    

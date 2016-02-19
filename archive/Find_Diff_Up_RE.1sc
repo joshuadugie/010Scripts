@@ -1,0 +1,46 @@
+//------------------------------------------------
+//--- 010 Editor v6.0.1 Script File
+//
+//      File: Find_Diff_Up_RE.1sc
+//   Authors: Artur Babecki
+//   Version: 1.1
+//   Purpose: Finds the first byte with a different value than 
+//            the current byte. Allows skipping large blocks 
+//            filled with the same byte. Search direction is up
+//            and uses regular expressions.
+//  Category: Search
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2015-02-18 A Babecki: Initial release.
+//------------------------------------------------
+RequiresVersion(6);
+#define SELECTION 1
+uchar c;
+string str;
+uint64 p,pc0,pc;
+uint64 fsize;
+fsize=FileSize();
+
+Printf ("\n\nSearching \"UP\"\n\n");
+pc0=pc=GetCursorPos();
+if (pc==0) {Printf ("BEGIN of file - nothing to do");return;}
+if (pc==fsize) {Printf ("Beyond END of file - nothing to do");return;}
+
+c=ReadByte(pc);
+Printf ("current byte          %.2Xh",c);
+Printf ("\nstarted from offset   %.8LXh  \n",pc);
+SPrintf(str,"[^\\x%.2x,h]",c);
+pc=FindFirst(str,true,false,FINDMETHOD_REGEX,0.0,0,0,pc0,24) ;
+
+if(pc==-1L) {pc=0;SetCursorPos(pc);
+Printf ("\nBEGIN of file reached \n");
+}else {pc=pc+1;SetCursorPos(pc-1);}
+
+
+p=pc0-pc+1;        
+Printf ("stopped at offset     %.8LXh\n",pc);    
+Printf ("number of bytes       %Lu (%.8LXh)\n",p,p);
+if(SELECTION) SetSelection(pc,p);
+return ;
+//-------------------------------------------------------------------
+

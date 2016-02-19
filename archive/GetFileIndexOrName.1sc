@@ -1,0 +1,84 @@
+//------------------------------------------------
+//--- 010 Editor Script File
+//
+//      File: GetFileIndexOrName.1sc
+//   Authors: Anon
+//   Version: 1.1
+//   Purpose: Utility functions to extract the file name 
+//            from a file path, or to look up a file index 
+//            from a file name. Note that 010 Editor now 
+//            contains the built-in functions FileNameGetBase 
+//            and FindOpenFile.
+//  Category: Utility
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   Anon: Initial release.
+//------------------------------------------------
+
+//--------------------------------------
+// Gets the file name only from a given full path
+// @full_path   GetFileName()
+// @result      file name
+//--------------------------------------
+char[] get_filename(char full_path[])
+{
+   
+    int i;
+    int     length, del_index;
+    char    file_name[];
+
+    length = Strlen(full_path);
+    file_name = full_path;
+    i=0;
+    while(Strstr(file_name, "\\") > -1)
+    {
+        del_index = Strstr(file_name, "\\");
+        file_name = SubStr(file_name, del_index+1, 0);
+    }
+   
+    return file_name;
+}
+
+//--------------------------------------
+// Get the index of an opened file
+// @file_name   The name of an opened file
+// @result      index (can be used with FileSelect) of the opened file
+//              -1 for no file found
+//--------------------------------------
+int get_fileindex(char file_name[])
+{
+    int         i, total_files;
+    int         cur_fileindex, rtn_index;
+    string      tmp_filename;
+   
+    // Set default index: no file found
+    rtn_index = -1;
+
+    // At the end, we want to return to our current script
+    // So set the current file index that can be used later on
+    cur_fileindex = GetFileNum();
+
+    // Get the total files opened;
+    total_files = FileCount();
+
+    // We will run through each file opened;
+    // Then we will select the file, check the file name, and then move to the next file
+    for(i = 0; i < total_files; i++)
+    {
+        // Open first file
+        FileSelect(i); 
+       
+        // Get file name
+        tmp_filename = get_filename(GetFileName());
+
+        // Check for a match
+        if(tmp_filename == file_name)
+        {
+            rtn_index = GetFileNum();
+            break;
+        }
+    }
+    FileSelect(cur_fileindex);
+    return rtn_index;
+}
+

@@ -1,0 +1,119 @@
+//------------------------------------------------
+//--- 010 Editor v5.0.2 Script File
+//
+//      File: ArrayOfStrings.1sc
+//   Authors: Artur Babecki
+//    E-mail: artur.babecki@gmail.com
+//   Version: 1.1
+//   Purpose: Contains utility functions for packing or unpacking a 
+//            set of strings into an array. Includes an example.
+//  Category: Utility
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2015-03-04 A Babecki: Initial release.
+// 
+// Usage of the array of strings
+//     010Editor does not allow to use the arrays of the strings.
+//     The three function are created to allow the operation on the arrays of the strings
+//
+//     void PackString (char a[],uint a_idx[],char b[]) - pack the b[] string into container a[] 
+//
+//     void UnpackString (char b[],char a[],uint a_idx[],int i) - unpack the string [i] from 
+//                                                                the container a[] into string b[] 
+//
+//     void ClearPackedStrings(char a[],uint a_idx[])           - clear the container
+//
+//     char a[MAX] is the container, MAX  = total size of stored strings;
+//     uint a_idx[MAX2] is the index of the array, MAX2 = (number of strings *2) +1
+//       structure:  N = a_idx[0]   total number of packed strings
+//                   a_idx[N+1]     string offset
+//                   a_idx[N+2]     string length
+//    
+//------------------------------------------------
+ 
+// Example of usage: Get the opened file names and store into
+// packed container, then retrieve them from the container
+ 
+char container[65535];     //total size of container
+uint idx_container[1024];  // index size >= (number of strings)*2+1
+
+char name[1024];  //file name 
+int n,n0;
+int i;
+
+n0=GetFileNum();   // store the index of the current file
+
+ClearPackedStrings(container,idx_container);  //just to show syntax - our container is still empty
+
+n=FileCount(); 
+//  collect the file names into the container
+for (i=0;i<n;i++){
+ FileSelect(i);
+ PackString (container,idx_container,GetFileName());
+}
+
+//idx_container[0] - number of stored strings 
+Printf("\nNumber of strings in the container %d\n",idx_container[0]); 
+Printf("\nRetrieved file names from the container:\n");
+//retrieve filenames from the container
+
+for (i=0;i<idx_container[0];i++)
+{
+    UnpackString(name,container,idx_container,i);
+    Printf(" name[%d] = %s\n",i,name);
+}
+    FileSelect(n0); //return to the current file
+    Printf("\nThe end of the example.\n");
+ 
+//End of an example
+
+//
+//----------------------------------------
+void  PackString (char a[],uint a_idx[],char b[])
+{
+// packs string b[] into container a[]
+// returns total number of packed strings inside container;
+// a_idx  - index array 
+// structure:  N = a_idx[0]   total number of packed strings
+//             a_idx[N+1]     string offset
+//             a_idx[N+2]     sting length
+
+
+uint len_a=Strlen(a);
+uint len_b=Strlen(b);
+//check if the declared container and its index array are enough big.
+    if ((len_a+len_b)>sizeof(a)){Printf("\nERROR(PackString): Declared container too small.\n"); Exit(-1);}
+    if ( (2*(a_idx[0]+1) +1)> sizeof(a_idx)/4){Printf("\nERROR(PackString): Declared index of container too small.\n"); Exit(-1);}
+
+    a_idx[2*a_idx[0]+2]=len_a;
+    a=a+b;
+    a_idx[2*a_idx[0]+1]=len_b;
+    ++a_idx[0];
+    return ;
+}
+
+//---------------------------
+void  UnpackString (char b[],char a[],uint a_idx[],int i)
+{
+int k;
+    if (i>a_idx[0]-1) {
+    Printf ("\n\nERROR(UnpackString): Array index too big.\nNumber of packed strings: %d\n               Requested: %d\n",a_idx[0],i+1);
+    Printf ("\n");Exit(-1);
+    }
+
+    for(k=0;k<a_idx[2*i+1];k++){
+     b[k]=a[a_idx[2*i+2]+k];
+     b[k+1]=0;
+     b[k+2]=0;
+    }
+}
+
+//----------------------------------------
+void ClearPackedStrings(char a[],uint a_idx[])
+{
+  int i;
+ a_idx[0]=0;
+     a[0]=0;
+     a[1]=0;
+  return;
+}

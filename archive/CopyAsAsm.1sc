@@ -1,0 +1,68 @@
+//------------------------------------------------
+//--- 010 Editor v3.0 Script File
+//
+//      File: CopyAsAsm.1sc
+//   Authors: SweetScape Software
+//   Version: 1.1
+//   Purpose: Copies the current selection to the clipboard 
+//            as hex bytes in a format suitable for inclusion 
+//            in an assembly program. If no selection is made 
+//            the whole file is copied.
+//  Category: Clipboard
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   SweetScape Software: Initial release.
+//------------------------------------------------
+
+int i, origfile, newfile, start, size, col, writeHeader;
+
+// Determine range to copy
+if( GetSelSize() == 0 )
+{
+    start = 0;
+    size  = FileSize();
+}
+else 
+{
+    start = GetSelStart(); 
+    size  = GetSelSize();
+}
+
+// Create a new file for writing data
+origfile = GetFileNum();
+newfile  = FileNew();
+FileSelect( origfile );
+
+// Convert each int to hex
+FPrintf( newfile, "table db " );
+col = 0;
+writeHeader = false;
+for( i = 0; i < size; i++ )
+{
+    // Write header at the beginning of the file
+    if( writeHeader )
+    {
+        FPrintf( newfile, "      db " );
+        writeHeader = false;
+    }
+
+    // Write int converted to hex
+    if( col > 0 )
+        FPrintf( newfile, ", " );
+    FPrintf( newfile, "0%02Xh", (int)ReadUByte(start+i) );
+
+    // Write end of line every 8 bytes
+    if( ++col == 8 ) 
+    {
+        FPrintf( newfile, "\r\n" ); 
+        writeHeader = true;
+        col = 0;
+    }
+}
+
+// Copy to clipboard and close the file
+FileSelect( newfile );
+SetSelection( 0, FileSize() );
+CutToClipboard();
+FileClose();
+FileSelect( origfile );

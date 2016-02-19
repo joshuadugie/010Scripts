@@ -1,0 +1,106 @@
+//------------------------------------------------
+//--- 010 Editor v4.0 Script File
+//
+//      File: DelColumn.1sc
+//   Authors: Artur Babecki
+//   Version: 0.1
+//   Purpose: Deletes all columns in a text file between the start and end of the selection.
+//  Category: Text
+//   History: 
+//   0.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   0.01  2012-06-09 A Babecki: Initial release.
+//
+// Usage  : 
+//  Select the block. 
+//  column  width = column address of the start <-> column address of the end of selection.
+//  column length = line address of the start <-> line address of the end of selection.
+//  "selected" column is highlited by temporary bookmarks before operation is confirmed
+//  
+//  Remarks:  script is for regular ASCII text files with CRLF  only 
+//            script uses bookmarks for selecting column - existing bookmarks
+//            at the start/and address of the selection will be deleted
+//  
+//------------------------------------------------
+
+#define MAX_LINELENGTH 1024
+int64 ssize,sstart,saddrend;
+int64 start_line,end_line,column_start,column_end,column_len,line_len,b_len;
+int64 i,j,nn;
+uint textlinesize;
+string line;
+int n;
+
+
+n=2; // CRLF
+
+ssize=GetSelSize();
+if(ssize==0) {Printf ("\nNothing selected - exiting\n");return;}
+
+//--------------------------------------------------
+// physical addresses -> text line, column addresses
+sstart=GetSelStart();
+saddrend=ssize+sstart;
+
+start_line=TextAddressToLine(sstart);
+column_start=TextAddressToColumn(sstart);
+
+end_line=TextAddressToLine(saddrend);
+column_end=TextAddressToColumn(saddrend);
+column_len=column_end-column_start;
+//-------------------------------------------------
+//   is address of  end of column > address of start colum?n
+if(column_len<=0) {Printf ("\nWrong columns selection - exiting\n"); return;}
+
+//-----------------------------------------------------
+//lets mark column block
+
+for (i=start_line;i<=end_line;i++)
+{
+
+    TextReadLine(line,i,MAX_LINELENGTH);
+    textlinesize=TextGetLineSize(i);
+    line_len=textlinesize-n;
+
+if (Strchr(line,0x0D)<0) line_len+=n;  // last line may have not CRLF
+
+if (line_len-column_start<column_len) b_len=line_len-column_start;
+    else {b_len=column_len;}
+    AddBookmark( TextLineToAddress(i)+column_start,"_col_","uchar",b_len,cYellow,cBlue);
+
+}
+
+SetSelection(0,0);
+
+//-----------------------------------------------------
+
+if( MessageBox( idYes | idNo, "Column Block Deleter",  "Delete Block?" )   == idYes )
+
+{
+
+ SetSelection(sstart,ssize);
+
+for (i=start_line;i<=end_line;i++)
+    {
+
+
+    TextReadLine(line,i,MAX_LINELENGTH);
+    textlinesize=TextGetLineSize(i);
+    line_len=textlinesize-n;
+
+    if (Strchr(line,0x0D)<0) line_len+=n; // last line may have not CRLF
+
+    if (line_len-column_start<column_len) b_len=line_len-column_start;
+    else {b_len=column_len;}
+    
+    line=StrDel(line,column_start,b_len);
+    TextWriteLine(line,i);
+    }
+
+}
+//-----------------------------------------------------
+// cleaning 
+SetSelection(0,0);
+
+j=GetNumBookmarks();
+for (i=0;i<j;i++) {if (GetBookmarkName(i)=="_col_") {RemoveBookmark(i);i--;} }
+//----------------------------------------------------------------------------------------

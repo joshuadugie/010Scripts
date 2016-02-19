@@ -1,0 +1,75 @@
+//------------------------------------------------
+//--- 010 Editor v5.0.2 Script File
+//
+//      File: FindAllClipboardBytes.1sc
+//   Authors: Artur Babecki
+//    E-mail: artur.babecki@gmail.com
+//   Version: 1.1
+//   Purpose: Find all occurrences of bytes stored in the clipboard. 
+//            Creates bookmarks for all occurrences found.
+//  Category: Search
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2014-07-28 A Babecki: Initial release.
+//------------------------------------------------
+
+// MAXSIZE :  maximum bytes to be found
+int  MAXSIZE=15000;
+int  ALL=  1;                               
+int  DIR = 1;
+// ALL=1  find and bookmark hits in the whole file
+// ALL=0 DIR=1  find and bookmark all occurrences from the cursor position to the end of the file
+// ALL=0 DIR=-1 find and bookmark all occurrences from the cursor position to the begining of the file
+  // Clear all previous bookmarks - uncomment the next line if you  want to do it
+//while (GetNumBookmarks())  RemoveBookmark(0);
+uint64 start,end;
+uchar buff[MAXSIZE];
+uint64 n;
+uint64 i;
+uchar count [24];
+uint Fg,Bg;
+//bookmark colors
+Fg=cWhite;
+Bg=0x9944CC;
+TFindResults fr;
+
+n=GetClipboardBytes( buff,MAXSIZE);
+
+if (n==0)
+{
+	Printf("\n0 bytes in clipboard. Exit.\n",n);
+	return ;
+}
+uchar buff2[n];   // tuning size 
+n=GetClipboardBytes( buff2,n);
+Printf("\n%Lu bytes from clipboard used as a pattern\n",n);
+
+start=0;
+end=0;      
+
+if (ALL==0){
+         if (DIR==1){start=GetCursorPos();} 
+            else {end=GetCursorPos();}
+        }           
+
+
+else {DIR=1;}
+
+Printf("Search starts from the position %.8LXh\n",start);
+Printf("Pattern found at:\n");
+
+fr=FindAll(buff2,false,false,false,0.0,1,start,end);
+if (fr.count==0)
+{
+Printf("\nPattern not found\n");
+}
+
+for (i=0;i<fr.count;i++)
+{
+SPrintf(count,"%.6u",i);
+AddBookmark(fr.start[i],"Clipboard_Bytes_"+count,"uchar",fr.size[i],Fg,Bg,false); 
+Printf("%.8LXh\n",fr.start[i]);
+}
+Printf("\nTotal hits %d \n",fr.count);
+//------------------------------------------------------------
+

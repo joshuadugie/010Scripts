@@ -1,0 +1,34 @@
+//------------------------------------------------
+//--- 010 Editor v3.2.2 Script File
+//
+//      File: SelToUpperASCII.1sc
+//   Authors: Artur Babecki
+//   Version: 1.1
+//   Purpose: Sets all letters in the selection to upper case.
+//            Note this functionality is now built into 010 Editor
+//            using 'Format > Uppercase'.
+//  Category: Text
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2012-02-24 A Babecki: Initial release.
+//------------------------------------------------
+
+SelToUpperASCII();
+//-----------------------------------
+void SelToUpperASCII()
+{
+    local int64 sel,start;
+    local uchar buf[1024];
+    local int i;
+    sel=GetSelSize();
+    start=GetSelStart();
+    ReadBytes(buf,start,sel) ;
+    for (i=0;i<sel;i++) {
+    if ( buf[i]>='a' && buf[i]<='z'){
+    buf[i]-=0x20;}
+    WriteBytes( buf,start,sel );
+}
+//---------------------------------------
+}
+
+//------------------------------------------------

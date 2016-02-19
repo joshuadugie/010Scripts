@@ -1,0 +1,67 @@
+//------------------------------------------------
+//--- 010 Editor v3.2.2 Script File
+//
+//      File: Entropy.1sc
+//   Authors: Didier Stevens
+//   Version: 0.1
+//   Purpose: Displays the entropy value for a file or 
+//            selection. The more random the file looks, 
+//            the more the entropy value approaches 8.0 
+//            (its maximum value).
+//  Category: Binary
+//   History: 
+//   0.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   0.0.1 2012-06-20 D Stevens: Initial release.
+//
+// See  https://en.wikipedia.org/wiki/Entropy_%28information_theory%29
+//
+// Source code put in public domain by Didier Stevens, no Copyright
+// https://DidierStevens.com
+// Use at your own risk
+//------------------------------------------------
+
+const int BUCKET_SIZE = 256;
+
+// Workaround for floating point negation bug fixed in 010 Editor v4.0.0
+double NegateDouble(double dIn)
+{
+    return dIn * -1;
+}
+
+double CalculateEntropy(int64 iStart, int64 iSize)
+{
+    int64 iIter;
+    int64 aiPrevelance[BUCKET_SIZE];
+    double dEntropy;
+    double dPrevalence;
+
+    for (iIter = iStart; iIter - iStart < iSize; iIter++)
+        aiPrevelance[ReadUByte(iIter)] += 1;
+    
+    for (iIter = 0; iIter < BUCKET_SIZE; iIter++)
+        if (aiPrevelance[iIter] > 0)
+        {
+            dPrevalence = (double) aiPrevelance[iIter] / (double) iSize;
+            dEntropy += NegateDouble(dPrevalence * Log(dPrevalence) / Log(2.0));
+        }
+		
+	return dEntropy;
+}
+
+void Main(void)
+{
+    int64 iStart;
+    int64 iSize;
+
+    iSize = GetSelSize();
+    if (0 == iSize)
+    {
+        iStart = 0;
+        iSize = FileSize();
+    }
+    else
+        iStart = GetSelStart();
+    MessageBox(idOk, "Entropy", "The entropy is %f", CalculateEntropy(iStart, iSize));
+}
+
+Main();

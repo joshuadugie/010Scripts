@@ -1,0 +1,78 @@
+//------------------------------------------------
+//--- 010 Editor v6.0.1 Script File
+//
+//      File: ConvertBytesToInts.1sc
+//   Authors: Artur Babecki
+//   Version: 1.1
+//   Purpose: Conversion of an array of bytes to 
+//            integer types (short, int, int64).
+//  Category: Utility
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2015-04-15 A Babecki: Initial release.
+//
+// Similar to ConvertBytesToFloat/ConvertBytesToHFloat but for the integers
+// syntax:   int64 ConvertBytesToInts (char type[],char dat[],int n)
+//  type[] - target type ("short","int","int64")
+//   dat[] - array of bytes
+//      n  - starting position (index)  in the array
+// result  - int64  -> do cast (short),(int),(FILETIME) etc. after invoking function
+//                    for other  data types   
+//  LittleEndian()//BigEndian()sensitive        
+//------------------------------------------------
+
+//example
+//char dat[8]={0xa9,0x46,0xef,0x3e,0x12,0x45,0x12,0xfa};
+char dat[8]={0x01,0xcb,0x26,0x04,0x0e,0x61,0x78,0xd4};
+Printf("\nThe example:\n\narray: char dat[8]={0x01,0xcb,0x26,0x04,0x0e,0x61,0x78,0xd4}\n");
+LittleEndian();
+Printf("\nlittle endian int64: %.8LX\n",ConvertBytesToInts("int64",dat,0));
+BigEndian();
+Printf("big endian int64:    %.8LX\n",ConvertBytesToInts("int64",dat,0));
+LittleEndian();
+Printf("int:                 %.8LX\n",ConvertBytesToInts("int",dat,0));  
+BigEndian();
+Printf("big endian int:      %.8LX\n",ConvertBytesToInts("int",dat,0)); 
+LittleEndian();
+Printf("short int from indx 2:      %.8hX\n",ConvertBytesToInts("short",dat,2));
+Printf("DOS date  from indx 2:      %s\n",DosDateToString( (DOSDATE) ConvertBytesToInts("int",dat,2)));
+Printf("DOS time  from indx 2:      %s\n",DosTimeToString( (DOSTIME) ConvertBytesToInts("int",dat,2)));
+BigEndian();
+Printf("\nFILETIME from big endian int64     %s\n",FileTimeToString( (FILETIME) ConvertBytesToInts("int64",dat,0)));
+//end of an example 
+
+//-------------------------------------------------------------------------
+
+int64 ConvertBytesToInts (char type[],char dat[],int n)
+{
+//  type[] - target type ("short","int","int64")
+//   dat[] - array of bytes
+//      n  - starting position in the array
+// result  - int64  - do cast (short),(int),(FILETIME) etc. after invoking function
+//                    for other  data types   
+local int i,size;
+local int64 value;
+switch(type)
+  {
+    case "short":  size=sizeof(int); break;
+    case "int":   size=sizeof(int); break;
+    case "int64": size=sizeof(int64); break;
+    default:    default: 
+    MessageBox( idCancel,"ConvertBytesToInts ()", "wrong data type specified : "+type);Exit(-1);
+    Printf("Wrong data type in conversion\n");return 0;
+ }
+
+if(sizeof(dat)<n+size) {  MessageBox( idCancel,"ConvertBytesToInts ()","request out of array");Exit(-1);}
+
+
+if(IsLittleEndian())
+    for( i = 0; i <size; i++ )
+    {
+    value = (value << 8) + (uchar)dat[size-i+n-1];
+    }
+else
+    for(i=size;i>0;i--)   
+    {value = (value << 8) + (uchar)dat[size-i+n];}
+return value;
+}
+//-------------------------------------------------------------------------

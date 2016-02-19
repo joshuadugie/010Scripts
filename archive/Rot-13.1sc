@@ -1,0 +1,56 @@
+//------------------------------------------------
+//--- 010 Editor v4.0.2 Script File
+//
+//      File: Rot-13.1sc
+//   Authors: Artur Babecki
+//    E-mail: artur.babecki@gmail.com
+//   Version: 1.1
+//   Purpose: ROT-13 decoder/encoder of the selected block.
+//  Category: Binary
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2012-09-14 A Babecki: Initial release.
+//
+// example:
+// HRZR_EHACNGU:P:\Cebtenz Svyrf\Argfpncr\Pbzzhavpngbe\Cebtenz\argfpncr.rkr
+//
+// UEME_RUNPATH:C:\Program Files\Netscape\Communicator\Program\netscape.exe
+//------------------------------------------------
+
+#define UPDATE_FLAG   1    //if 1 update file with decrypted values else print in the Output tab
+
+uint64 pos,start_sel,sel_size;
+uint64 i;
+uchar c;
+
+sel_size=GetSelSize();
+pos=GetSelStart();
+
+if (sel_size==0L){ Printf ("\nNothing selected\n"); return; }
+
+Printf ("ROT-13 decryption on selected block\n\n");
+
+for(i=0;i<sel_size;i++)
+    
+    {
+     c=ReadByte (pos+i);
+     c=Rot13(c);
+
+     if (UPDATE_FLAG==1)     WriteByte(pos+i,c);
+     else     Printf("%c",c);
+      }
+
+//--------------------------------------------------------------------------------------
+uchar Rot13(char c) {
+
+          if ( (c >= 65 && c <= 77) || (c >= 97 && c <= 109) )
+              {c=c+13;}   
+          else           
+             {
+                if ( (c >= 78 && c <= 90) || (c >= 110 && c <= 122) )     
+                {  c=c-13;}
+             }
+  return c;
+}
+  
+//--------------------------------------------------------------------------------------

@@ -1,0 +1,39 @@
+//------------------------------------------------
+//--- 010 Editor v1.0 Script File
+//
+//      File: MultiplePaste.1sc
+//   Authors: SweetScape Software
+//   Version: 2.2
+//   Purpose: Executes a paste operation a number of times. 
+//            The user can enter the number of times to 
+//            paste in an input box.
+//  Category: Clipboard
+//   History: 
+//   2.2   2016-02-09 SweetScape Software: Updated header for repository submission.
+//   2.1   SweetScape: Use the GetScriptName and RequiresFile functions.
+//   1.0   SweetScape: Initial release.
+//------------------------------------------------
+RequiresVersion( 4.0 );
+RequiresFile();
+
+// Define variables
+int   i, count;
+
+// Input number of time to paste
+count = InputNumber( GetScriptName(), "Enter number of times to paste:", "2" );
+if( count == BAD_VALUE )
+    return -1;
+
+// Check count
+if( count <= 0 )
+{
+    MessageBox( idOk, GetScriptName(), "Invalidate input." );
+    return -1;
+}
+
+// Paste multiple times
+for( i = 0; i < count; i++ )
+{
+    PasteFromClipboard();
+    SetSelection( GetCursorPos(), 0 );
+}

@@ -1,0 +1,67 @@
+//------------------------------------------------
+//--- 010 Editor Script File
+//
+//      File: GUID.1sc
+//   Authors: Didier Stevens
+//   Website: https://DidierStevens.com
+//   Version: 0.1
+//   Purpose: Formats a 16 byte sequence as a Microsoft GUID, 
+//            prints the result and then copies the result 
+//            to the clipboard.
+//  Category: Utility
+//   History: 
+//   0.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   0.0.2 2010-08-29 D Stevens: added CopyStringToClipboard
+//   0.0.1 2010-08-11 D Stevens: start development with 010 Editor v3.1.2
+//
+// Source code put in public domain by Didier Stevens, no Copyright
+// https://DidierStevens.com
+// Use at your own risk
+//------------------------------------------------
+
+void ReadGUID123(int64 iPosition, int32 &iData1, int16 &iData2, int16 &iData3)
+{
+    iData1 = ReadUInt(iPosition);
+    iPosition += 4;
+    iData2 = ReadUShort(iPosition);
+    iPosition += 2;
+    iData3 = ReadUShort(iPosition);
+    iPosition += 2;
+}
+
+void ReadGUID4(int64 iPosition, int16 &iData4a, int16 &iData4b, int32 &iData4c)
+{
+    iData4a = ReadUShort(iPosition);
+    iPosition += 2;
+    iData4b = ReadUShort(iPosition);
+    iPosition += 2;
+    iData4c = ReadUInt(iPosition);
+    iPosition += 4;
+}
+
+string FormatGUID(int64 iPosition)
+{
+    string sGUID;
+    int32 iData1;
+    int16 iData2;
+    int16 iData3;
+    int16 iData4a;
+    int16 iData4b;
+    int32 iData4c;
+    int iStartedAsBigEndian;
+
+    iStartedAsBigEndian = IsBigEndian();
+    LittleEndian();
+    ReadGUID123(iPosition, iData1, iData2, iData3);
+    BigEndian();
+    ReadGUID4(iPosition + 8, iData4a, iData4b, iData4c);
+    if (!iStartedAsBigEndian)
+        LittleEndian();
+    SPrintf(sGUID, "{%08X-%04X-%04X-%04X-%04X%08X}", iData1, iData2, iData3, iData4a, iData4b, iData4c);
+
+    return sGUID;
+}
+
+string GUID = FormatGUID(GetCursorPos());
+CopyStringToClipboard(GUID);
+Printf("GUID = %s\n", GUID);

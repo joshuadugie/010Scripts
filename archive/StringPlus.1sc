@@ -1,0 +1,61 @@
+//------------------------------------------------
+//--- 010 Editor v3.2.2 Script File
+//
+//      File: StringPlus.1sc
+//   Authors: N0VA8o
+//    E-mail: N0VA8o.lau@gmail.com
+//   Version: 1.1
+//   Purpose: Add a number to each character of the 
+//            selected string or whole file.
+//  Category: Binary
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   N0VA8o: Initial release.
+//------------------------------------------------
+const string title = "String Plus";
+int64 adr, siz, out, index;
+int actfile, newfile,  bits;
+int iKey;
+char tmp;
+if (FileCount() == 0) {
+  MessageBox(idOk, title, "No file is open.");
+  return -1;
+}
+
+if (GetSelSize() <= 0) {
+  adr = 0; siz = FileSize();
+}
+else {
+  adr = GetSelStart(); siz = GetSelSize();
+}
+
+if (siz == 0) {
+  MessageBox(idOk, title, "No bytes to process.");
+  return -1;
+}
+
+if (siz == 0) {
+  MessageBox(idOk, title, "No bytes to process.");
+  return -1;
+}
+
+iKey = InputNumber(title, "Integer Please:", "0");
+bits = 0; out = 0;
+actfile = GetFileNum();
+newfile = FileNew();
+FileSelect(actfile);
+index = adr;
+while( index < adr + siz)
+{
+    
+    FileSelect(actfile);
+    tmp = ReadByte(index);
+    FileSelect(newfile);
+    tmp = tmp+iKey;
+    WriteByte(out, tmp);
+    index++;
+    out++;
+}
+
+FileSelect(newfile);
+SetCursorPos(FileSize());  

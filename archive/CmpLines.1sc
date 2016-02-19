@@ -1,0 +1,60 @@
+//------------------------------------------------
+//--- 010 Editor v5.0c Script File
+//
+//      File: CmpLines.1sc
+//   Authors: Artur Babecki
+//   Version: 1.1
+//   Purpose: Compares the current text line with the next line 
+//            and sets bookmarks at characters which differ, 
+//            marking them red.
+//  Category: Compare
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   A Babecki: Initial release.
+//------------------------------------------------
+ 
+uint64 cursor_p;
+uint64 l1,pos;
+uint64 nlines; 
+string line,line1;
+uint len0,len1,len2;
+uint i;
+string hstr;
+uchar mark,mark1;
+ hstr=GetFileInterface();
+if (hstr!="Text"){Printf ("%s\n",hstr); 
+
+MessageBox( idYes | idNo,"Error Message","ERROR: This is not text file");
+return -1;
+
+}
+while(GetNumBookmarks()) RemoveBookmark(0);
+
+nlines=TextGetNumLines();
+cursor_p=GetCursorPos();
+l1=TextAddressToLine(cursor_p);
+if (l1==nlines-1) return;
+TextReadLine(line,l1,65535);
+TextReadLine(line1,l1+1,65535);
+len1=Strlen(line);
+len2=Strlen(line1);
+len1<len2? len0=len1:len0=len2;
+Printf("%u",len2);
+
+for (i=1;i<len0-2;i++) {
+
+if (line[i]!=line1[i]) 
+{
+
+pos=TextColumnToAddress(l1,i);
+AddBookmark(pos,"","uchar",-1,cRed,cWhite); 
+pos=TextColumnToAddress(l1+1,i);
+AddBookmark(pos,"","uchar",-1,cRed,cWhite); 
+
+
+
+     }
+
+
+}
+

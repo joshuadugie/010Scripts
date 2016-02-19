@@ -1,0 +1,41 @@
+//------------------------------------------------
+//--- 010 Editor v4.0.3 Script File
+//
+//      File: CopyAsBinary.1sc
+//   Authors: SweetScape Software
+//   Version: 1.1
+//   Purpose: Copies the currently selected bytes to the 
+//            clipboard in binary format. Note that this 
+//            functionality is now built into 010 Editor
+//            using 'Copy > Copy As > Copy as Binary Text'.
+//  Category: Clipboard
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   SweetScape Software: Initial release.
+//------------------------------------------------
+
+int  pos, start, size;
+char str[65535];
+
+// Get the size of the selection
+start = GetSelStart(); 
+size  = GetSelSize();
+if( size == 0 )
+{
+    MessageBox( idOk, GetScriptName(), "%s can only be executed when a selection is made.", GetScriptName() );
+    return -1;
+}
+
+// Read the bytes
+for( pos = 0; pos < size; pos++ )
+{
+    str += IntToBinaryStr( ReadUByte( start+pos ) );
+    if( pos % 8 == 7 )
+        str += "\r\n";
+    else
+        str += " ";
+}
+
+// Copy bytes to the clipboard
+CopyStringToClipboard( str );
+StatusMessage( "Copied %d bytes to the clipboard.", size );

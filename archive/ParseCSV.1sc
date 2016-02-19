@@ -1,0 +1,123 @@
+//------------------------------------------------
+//--- 010 Editor v6.0.1 Script File
+//
+//      File: ParseCSV.1sc
+//   Authors: Artur Babecki
+//    E-mail: artur.babecki@gmail.com
+//   Version: 1.1
+//   Purpose: A set of functions to help parsing CSV data with 
+//            an example. Other separator than "," can be specified.
+//  Category: Utility
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2015-03-13 A Babecki: Initial release.
+//
+// int FindFields(char line[],int idx[],char separator)
+//     line - line to parse,idx- array of the positions of the separators
+//     returns number of fields
+// char[] GetField (char line[],int idx[], int n,int trim) 
+//      line - line to parse, idx -array of positions from FindFields
+//      n - requested field number, trim - false: do not trim whitespaces at the separators, true: trim whitespaces
+//      returns requested field  
+// char [] TrimWhiteSpaces(char line[])
+//    Remove whitespaces from the head and the tail of the string ( " " and "\t" )
+//------------------------------------------------
+
+// begin of the example  
+int idx[64]; //array for keeping field indexes
+
+char line[1024]; 
+string field;
+int line_number;
+int linesize;
+int number_of_fields, field_number;
+
+RequiresVersion( 6,0,0 );   // regular expressions are in use
+
+if(GetFileInterface()!="Text")  
+{Printf("\n This is not text file!!!\n");return;}
+
+for (line_number=0;line_number<TextGetNumLines();line_number++)
+{
+
+	linesize=TextReadLine( line, line_number,1024,false );
+    Printf("line:    %d\n",line_number);
+	
+   if(linesize>0)        // parse only not empty line
+	{
+//    parse current line 
+	  number_of_fields=FindFields(line,idx,',');
+//	
+      Printf("number of fields: %d\n",number_of_fields);
+
+//    get and print fields found , trim whitespaces
+  	  for(field_number=0;field_number<number_of_fields;field_number++)
+	  {	
+
+        field=GetField(line,idx,field_number,true);
+        Printf("field%d: [%s]\n",field_number,field);
+        }	
+       
+    }
+     else {Printf("number of fields: 0\n");}     // empty line - not parsed
+
+Printf("------------------------------------\n");
+}
+
+//end of the example
+
+
+char [] TrimWhiteSpaces(char line[]){
+// Remove whitespaces from the head and the tail of the string
+//
+    local string st;
+    local int result,size;
+    local string wslist="[ \t]+";  //whitespaces
+    RegExSearch(line,"^"+wslist,size,0);
+    st=StrDel(line,0,size);
+    result=RegExSearch(st,wslist+"$",size,0);
+    st=StrDel(st,result,size);
+return st;
+}
+//------------------------------------------
+
+int FindFields(char line[],int idx[],char separator)
+{
+// create array idx[] of the positions of separators 
+// return number of fields
+// the idx[0]=0 start of string "dummy separator"
+//
+    local int result,size,start,i;
+    local string sep;
+    sep=separator;
+    i=1;
+    idx[0]=0;
+    while (result>=0){
+        result = RegExSearch(line,sep,size,start );
+        idx[i]=result;
+        start=result+1;
+        i++;
+    }
+    idx[i-1]=Strlen(line);
+    i--;
+    return i;
+}
+//------------------------------------------
+
+char[] GetField (char line[],int idx[], int n,int trim)
+{
+// get field  n  from line using the idx array initialzed by FindFields function . First field is  n=0.
+// trim -  false: get field as is, true: remove white spaces from the head and the tail.
+//
+if (n==0)
+{
+    if (trim==0) return SubStr(line,idx[n],idx[n+1]-idx[n]);
+    else  return TrimWhiteSpaces(SubStr(line,idx[n],idx[n+1]-idx[n]));
+}
+else {
+    if (trim==0) return SubStr(line,idx[n]+1,idx[n+1]-idx[n]-1);
+    else  return TrimWhiteSpaces(SubStr(line,idx[n]+1,idx[n+1]-idx[n]-1));
+    }
+
+}
+//-------------------------------------------

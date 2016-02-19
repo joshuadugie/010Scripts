@@ -1,0 +1,49 @@
+//------------------------------------------------
+//--- 010 Editor v5.0.1 Script File
+//
+//      File: SectorSearch.1sc
+//   Authors: SweetScape Software
+//   Version: 1.1
+//   Purpose: Searches at the start of each sector for 
+//            a value. Moves the cursor to the next 
+//            occurrence every time the script is run.
+//  Category: Search
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   SweetScape Software: Initial release.
+//------------------------------------------------
+
+// Calculate sector size
+const int sectorSize = GetSectorSize();
+if( sectorSize <= 0 )
+    sectorSize = 512;
+
+// Get value to find
+string findValue = InputString( GetScriptName(), "Enter value to find at the beginning of a sector:", "FILE0" );
+int findLen = Strlen( findValue );
+if( findLen == 0 )
+    return -1; // cancelled
+
+// Calculate position to search from
+int64 pos = (GetSelSize() > 0) ? GetSelStart() : GetCursorPos();
+
+// If we have a selection, don't allow the search to return the first position
+int64 startPos = -1000;
+if( GetSelSize() == findLen )
+    startPos = pos;
+
+// Search starting from pos - keep searching until hit is at the beginning of a sector
+pos = FindFirst( findValue, true, false, false, 0.0, 1, pos );
+while( ((pos >= 0) && ( (pos % sectorSize) != 0 )) || (pos == startPos) )
+    pos = FindNext();
+
+// Move the cursor
+if( pos < 0 )
+    Warning( "No more occurrences of '%s' found.", findValue );
+else
+{
+    // Found the value
+    SetCursorPos( pos );
+    SetSelection( pos, findLen );
+    StatusMessage( "Found occurrence at 0x%LX", pos );
+}

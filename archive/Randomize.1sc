@@ -1,0 +1,75 @@
+//------------------------------------------------
+//--- 010 Editor v1.0 Script File
+//
+//      File: Randomize.1sc
+//   Authors: SweetScape Software
+//   Version: 2.3
+//   Purpose: Assigns a set of random byte values to a file. 
+//            If a selection is made only the selected bytes 
+//            are modified, otherwise the whole file is 
+//            modified. The user can enter a minimum and 
+//            maximum value to generate.
+//  Category: Binary
+//   History: 
+//   2.3   2016-02-09 SweetScape Software: Updated header for repository submission.
+//   2.2   SweetScape: Use the GetScriptName and RequiresFile functions.
+//   1.0   SweetScape: Initial release.
+//------------------------------------------------
+RequiresVersion( 4.0 );
+RequiresFile();
+
+// Define variables
+const int BLOCK_SIZE = 1024;
+uchar buffer[ BLOCK_SIZE ];
+quad  size, pos;
+int   i, bufsize, minvalue, maxvalue, range;
+
+// Input minimum value
+minvalue = InputNumber( GetScriptName(), "Enter a minimum byte value:", "0" );
+if( minvalue == BAD_VALUE )
+    return -1;
+
+// Input maximum value
+maxvalue = InputNumber( GetScriptName(), "Enter a maximum byte value:", "255" );
+if( maxvalue == BAD_VALUE )
+    return -1;
+
+// Test range
+range = maxvalue - minvalue;
+if( range <= 0 )
+{
+    MessageBox( idOk, GetScriptName(), "Invalid minimum and maximum." );
+    return -1;
+}
+
+// Calculate range
+if( GetSelSize() > 0 )
+{
+    pos  = GetSelStart();
+    size = GetSelSize();
+}
+else
+{
+    pos   = 0;
+    size  = FileSize();
+}
+
+// Read file as a set of blocks
+//  - more efficient this way
+while( size > 0 )
+{
+    // Read set of bytes from the file
+    bufsize = size < BLOCK_SIZE ? size : BLOCK_SIZE;
+    ReadBytes( buffer, pos, bufsize );
+
+    // Randomize each byte
+    for( i = 0; i < bufsize; i++ )
+    {
+        buffer[i] = (uchar)( Random( range ) + minvalue );
+    }        
+
+    // Write and advance to next block
+    WriteBytes( buffer, pos, bufsize );    
+    pos  += bufsize;
+    size -= bufsize;
+}

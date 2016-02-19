@@ -1,0 +1,64 @@
+//------------------------------------------------
+//--- 010 Editor v3.1 Script File
+//
+//      File: QuickSort.1sc
+//   Authors: SweetScape Software
+//   Version: 1.1
+//   Purpose: Demonstrates how to do a 
+//            quicksort on an array.
+//  Category: Utility
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   SweetScape Software: Initial release.
+//------------------------------------------------
+
+// The array to sort
+int arraySize = 10000;
+int array[10000];
+
+// Fill with random data (for testing)
+int i;
+for( i = 0; i < arraySize; i++ )
+    array[i] = Random( arraySize );
+
+// The main quicksort function
+void quicksort( int low, int high ) 
+{
+    int i = low;
+    int j = high;
+    int temp = 0;
+
+    // Choose a pivot value
+    int z = array[(low + high) / 2];
+    
+    // Partition the data
+    do {
+        // Find member above
+        while( array[i] < z ) 
+            i++;
+        
+        // Find element below
+        while( array[j] > z ) 
+            j--;
+    
+        if( i <= j ) 
+        {
+            // swap two elements 
+            temp     = array[i];
+            array[i] = array[j]; 
+            array[j] = temp;
+            i++; 
+            j--;
+        }
+    } while( i <= j );
+    
+    // Recurse
+    if( low < j )  
+        quicksort( low, j );
+    if( i < high ) 
+        quicksort( i, high ); 
+}
+
+quicksort( 0, arraySize-1 );
+
+

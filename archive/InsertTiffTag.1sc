@@ -1,0 +1,120 @@
+//------------------------------------------------
+//--- 010 Editor Script File
+//
+//      File: InsertTiffTag.1sc
+//   Authors: Scott Winder
+//   Version: 1.1
+//   Purpose: Inserts the specified tag into a TIFF image, updating the necessary attributes and offsets accordingly.
+//  Category: Format Specific
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2007 S Winder: Initial release.
+//
+// Script to insert a TIFF tag in the correct position (numerical order)
+// 
+// Copyright (C) 2007 by Scott Winder
+// May be freely copied and used for any purpose, but the author disclaims all 
+// responsibility for any damage caused by this script.
+// 
+// Description:
+//    This script is fairly simplistic but will do in most cases: it increments the 
+// "offset" attribute for any tags with data that fall after the insertion point of 
+// the new tag, and it updates the IFD numentries attribute appropriately (if this 
+// doesn't make sense to you, use extra caution when using this script). It then 
+// inserts the tag with the requested number in the proper position, and sets a 
+// default type of eSHORT and a default count of 1, and zeros out the default data.
+// 
+// If you know enough about the TIFF spec to be mucking around here, you should be 
+// able to take it from there.
+// 
+// Note: This script requires that the TIFF template included with 010 Editor (or 
+// available on the website) be run on the file in question. MAKE A BACKUP BEFORE 
+// RUNNING because some edits seem to be done in place.
+//------------------------------------------------
+
+void addToOffsetsAfter( quad startingOffset, int32 summand )
+{
+	int i;
+	while( exists( ifd.dir[i] ) )
+	{
+		if ( exists( ifd.dir[i].offset ) ) {
+			Printf( "Offset[%d]: %Xh", ifd.dir[i].tag, ifd.dir[i].offset );
+			
+			if ( ifd.dir[i].offset >= startingOffset ) {
+				ifd.dir[i].offset += summand;
+				Printf( " => %Xh\n", ifd.dir[i].offset );
+			} else {
+				Printf( " (no change)\n" );
+			}
+		}
+		
+		i++;
+	}
+}
+
+
+uint16 getTagNumber()
+{
+	int n;
+
+	while ( n = InputNumber( "New Tag", "Enter a new TIFF tag number", "" ) )
+	{
+		if ( n == BAD_VALUE ) {
+			Exit(0);
+		} 
+		
+		if ( n < 0 || n > 65535 ) {
+			MessageBox( idOk, "Bad Tag",
+	                            "%d is an invalid tag number", n );
+		} else {
+			return n;
+		}
+	}
+}
+
+
+uint16 tagnum = getTagNumber();
+int i;
+int addToEnd = 1;
+while( exists( ifd.dir[i] ) )
+{
+	if ( ifd.dir[i].tag > tagnum ) {
+		addToEnd = 0;
+		break;
+	}
+	
+	i++;
+}
+
+// i now holds the index before which we would like to insert
+quad tagoffset;
+
+if ( addToEnd == 1 ) {
+	tagoffset = startof( ifd.dir[i-1] ) + 12;
+} else {
+	tagoffset = startof( ifd.dir[i] );
+}
+
+// tagoffset is now where we will eventually insert our tag bytes, but
+// first we'll increment the offset variable in all of the relevant entries
+addToOffsetsAfter( tagoffset, 12 );
+
+// Now we insert the tag
+ifd.numentries += 1;
+InsertBytes( tagoffset, 12 );
+
+quad pos = tagoffset;
+WriteUShort( pos, tagnum );
+pos += 2;
+WriteUShort( pos, 3 ); // eSHORT
+pos += 2;
+WriteUInt( pos, 1 );   // count = 1
+pos += 4;
+WriteUInt( pos, 0 );   // zero out the data portion
+pos += 4;              // unnecessary but provides clarity
+
+SetCursorPos( tagoffset );
+
+MessageBox( idOk, "Tag Added",
+            "Tag number %d has been added--press Ok, then F10 to re-run the template.", tagnum );
+

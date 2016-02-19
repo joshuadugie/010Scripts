@@ -1,0 +1,166 @@
+//------------------------------------------------
+//--- 010 Editor v3.2.2 Script File
+//
+//      File: RecordSearch.1sc
+//   Authors: Artur Babecki
+//   Version: 1.1
+//   Purpose: Treats a file as a set of blocks and searches 
+//            for a pattern at the beginning of each block. 
+//            Could be used, for example, to search for a 
+//            pattern at the beginning of each disk sector.
+//  Category: Search
+//   History: 
+//   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
+//   1.0   2012-04-24 A Babecki: Initial release.
+//
+// Example of searching blocks with anchoring the search patterns at fixed positions inside block, 
+//          '?' is used as a wild character
+//          pattern buffer is initialized  with '?' 
+//          the blocks found are "bookmarked" and the offsets are printed in OutputPane
+//
+//     void Init_Pattern (uchar pattern_buff[],string pattern,int position, int length)
+//     pattern_buff - pattern buffer, 
+//          pattern - pattern to inject, 
+//         position - pattern position inside block, 
+//           length - pattern length;
+//  
+//     int RecordSearch (uchar buffer[],uchar pattern_buff[], uint64 pos) 
+//                 buffer - read buffer
+//         pattern_buffer - initialized pattern_buffer
+//         pos            - starting position for search  incremented by BUFF_SIZE
+//
+//     int  Other_Condition()  dummy template for set additional condition if patterns are found
+//
+//
+// Example inside   is for disc/disc image  with fat file system 
+// It detects clusters  with subdirectory entries "." , ".." 
+//
+// example part is at   //      EXAMPLE OF USAGE 
+//------------------------------------------------
+
+#define WILDCHAR '?'
+#define BUFF_SIZE 2048
+
+// remove old bookmarks if set
+#define REMOVE_BOOKMARKS 1
+
+
+//--------------------------------------------------------------------------------------------
+uchar pattern_buff[BUFF_SIZE];   // pattern buffer 
+Memset (pattern_buff,WILDCHAR,BUFF_SIZE); // initialize pattern buffer with WILDCHAR
+
+uchar buffer[BUFF_SIZE];  //set buffer for file reading
+
+int64 pos;
+uint position,len;
+
+
+
+
+int Other_Condition()
+{
+//  add additional_condition  if needed d for   buffer[BUFF_SIZE]   - buffer ,   pos  - current file position
+//  after succesfully found pattern;
+
+    return 1;   //dummy true result
+    }
+//-----------------------------------------------
+
+
+#ifdef REMOVE_BOOKMARKS
+    do {RemoveBookmark(0); } while (GetNumBookmarks()>0);
+#endif
+
+
+
+//                      EXAMPLE OF USAGE 
+
+
+string pattern;
+
+pos=0L;            
+
+
+
+//-----------------------------------------------
+
+
+// inject patterns into the pattern buffer -  the strings are used 
+// hexadecimals can be inserted using  \x eg. \x1C  (excluding 0x00)
+//  \x00 should be directly injected into pattern_buff[]  if needed)
+
+
+//  example is for  detecting fat subdirectory entries "." , ".." at the beginning of cluster
+//   position at 0 and the 32 from the start of cluster 
+ 
+    pattern=".    ";     // spaces added for reducing false hits
+    position=0; len=Strlen(pattern);
+    Init_Pattern (pattern_buff,pattern,position,len);
+
+    pattern="..    ";  
+    position=32;  len=Strlen(pattern);
+    Init_Pattern (pattern_buff,pattern,position,len);
+
+
+
+
+    RecordSearch(buffer,pattern_buff,pos);
+
+
+
+//------------------------------------------------------------------------------------------------------------------------------
+
+
+
+//---------------------------------------------------------------------------------------------------------------------
+void Init_Pattern (uchar pattern_buff[],string pattern,int position, int length)
+{
+  local int i;
+    for (i=0;i<length;i++){
+            pattern_buff[i+position]=pattern[i];
+        }
+     return;
+}
+
+
+
+int RecordSearch (uchar buffer[],uchar pattern_buff[], uint64 pos) {
+
+int64 k,j;
+int result;
+uint size;
+string bkname;   // bookmark name
+size=FileSize();
+
+k=(int) ((size-pos)/BUFF_SIZE);   
+
+for (j=0;j<k;j++)
+{
+    ReadBytes(buffer,pos,BUFF_SIZE);
+    result=CmpBlock (buffer,pattern_buff);
+
+if (result==1){Printf ("\n%.8LX",pos); Printf (" %Ld",pos);    //if found print offset, set bookmark
+            SPrintf (bkname,"result_%.8LX",pos);
+            AddBookmark(pos,bkname,"char",BUFF_SIZE);
+        }
+
+pos+=BUFF_SIZE;
+
+}
+
+return 1;
+}
+
+//-----------------------------------------------------------------------------
+int CmpBlock (uchar b[],uchar pattern_b[]) {
+local  int i;
+        for( i=0;i<BUFF_SIZE;i++) {
+            if ( (b[i]!=pattern_b[i]) && (pattern_b[i]!=WILDCHAR))  {
+              return 0;}
+        }
+
+if (Other_Condition() )    return 1 ;
+        }
+
+//-----------------------------------------------------------------------------
+
