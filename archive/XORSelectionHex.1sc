@@ -4,11 +4,12 @@
 //      File: XORSelectionHex.1sc
 //   Authors: yoggy
 //   Website: https://github.com/yoggy
-//   Version: 1.1
+//   Version: 1.2
 //   Purpose: Similar to XORSelection.1sc but you can enter 
 //            the XOR key in HEX style.
 //  Category: Binary
 //   History: 
+//   1.2   2017-01-04 SweetScape: XOR key now accepted in different formats (e.g. 'a0f2a7', 'a0,f2,a7' or 'a0 f2 a7').
 //   1.1   2016-02-10 SweetScape Software: Updated header for repository submission.
 //   1.0   yoggy: Initial release.
 //------------------------------------------------
@@ -37,18 +38,25 @@ if (size == 0) {
 }
 
 // input hex key string
-sKey = InputString("XORSelectionHex", "Input the XOR hex key (ex.\"50,4b,03,04\")", "50,4b,03,04");
+sKey = InputString("XORSelectionHex", "Input the XOR hex key (ex.\"50,4b,03,04\" or \"a0f2a7\")", "50,4b,03,04");
 if (sKey == "") {
     MessageBox(idOk, "XORSelectionHex", "Please enter a valid hex key.");
     return -1;
 }
 iKeyLength = Strlen(sKey);
-iHexKeyLength = (int)((iKeyLength / 3.0) + 1.0);
+iHexKeyLength = 0; (int)((iKeyLength / 3.0) + 1.0);
 
-for (i = 0; i < iHexKeyLength; i++) {    
-    sHex = SubStr(sKey, i * 3, 2);
+i = 0;
+while( i < iKeyLength-1 ) {    
+    sHex = SubStr(sKey, i, 2);
     SScanf(sHex, "%02x", cHex);
     sHexKey += (cHex & (char)0xff);
+    iHexKeyLength++;
+    i+=2;
+
+    // Allow spaces or commas between hex codes
+    if( (i < iKeyLength) && ((sKey[i] == ' ') || (sKey[i] == ',')) )
+        i++;
 }
 Printf("key=%s\n", sHexKey);
 

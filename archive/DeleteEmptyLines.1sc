@@ -1,0 +1,57 @@
+//------------------------------------------------
+//--- 010 Editor v6.0.1 Script File
+//
+//      File: DeleteEmptyLines.1sc 
+//   Authors: SweetScape Software
+//   Version: 1.0
+//   Purpose: Deletes all empty lines in the selection.
+//            If no lines are selected all empty lines
+//            in the file are deleted.
+//  Category: Text
+//   History: 
+//   1.0   2016-03-15 SweetScape Software: Initial release.
+//------------------------------------------------
+int64 i, startLine, endLine = -1, count = 0;
+int   width, linefeedWidth;
+
+// Calculate start and end
+if( GetSelSize() > 0 )
+{
+    startLine = TextAddressToLine( GetSelStart() );
+    endLine   = TextAddressToLine( GetSelStart()+GetSelSize() );
+}
+else
+{
+    startLine = 0;
+    endLine   = TextGetNumLines()-1;
+}
+
+// Check each line for empty 
+for( i = endLine; (i >= 0) && (i >= startLine); i-- )
+{
+    // Read each line of the file
+    width = TextGetLineSize(i);
+    linefeedWidth = width - TextGetLineSize(i,false);
+    if( (width == linefeedWidth) && (width > 0) )
+    {
+        // Line contains only linefeeds - delete it
+        DeleteBytes( TextLineToAddress(i), width );    
+        count++;
+    }
+}
+
+// Reset the selection
+if( GetSelSize() > 0 )
+{
+    int64 startPos = TextLineToAddress( startLine );
+    int64 endPos   = TextLineToAddress( endLine-count+1 );
+    if( (startPos >= 0) && (endPos >= 0) )
+    {
+        SetSelection( startPos, endPos-startPos );
+        SetCursorPos( endPos );
+    }
+}
+
+// Show output
+StatusMessage( "Deleted %d lines.", count );
+

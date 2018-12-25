@@ -1,0 +1,96 @@
+//------------------------------------------------
+//--- 010 Editor v8.0.1 Script File
+//
+//      File: Find_and_Bookmark.1sc
+//   Authors: Artur Babecki
+//    E-mail: artur.babecki@gmail.com
+//   Version: 0.1
+//   Purpose: Find the interactively specified pattern and
+//            bookmark the results.The method of the search
+//            and the bookmark name can be selected.The last search
+//            pattern is kept in the environment variable.
+//            Script uses the selection as the range (if specified).
+//            See comment inside for further information.
+//  Category: Search
+//  History:
+//   0.1   2018-08-10 Artur Babecki: Initial release
+//------------------------------------------------
+// Tips : Remember that the searching is the sensitive for the format specifiers
+//       eg ",h", ",t":
+//      1. A1F47E,h   means the search for the hex string
+//      2. to handle the "A1F47E,h" literally as the text use:
+//        "A1F47E,h,a" or "A1F47E,h,t"
+//  The start of the block in this version of the script is always
+//  calculated from the begining of the file(absolute position)% (block size)
+//  i.e. no offset is taken into account as could be expected when the selection
+//  is used.
+//
+// if the input of the block size is cancelled the search
+//  looks for the pattern anywhere
+// if the size is selected by "ok", the script bookmarks only the hits when
+// (absolute position)% (block size) == 0 i.e. like in the script SectorSearch 
+//  by the SweetScape
+// 
+int matchcase= true;     //case sensitive 
+int SIZE=512;    // default block size for the search at "start" position"
+string pattern,bkname,lastpat;
+int method;
+int i;
+int counter;
+uint fgcolor,bgcolor;
+
+// the bookmark colors
+fgcolor=0x00ffff;
+bgcolor=0xff0000;
+
+TFindResults Fr;
+uint64 selstart,selsize;
+selstart=0;
+selsize=0;
+
+lastpat=GetEnv("010Ed_Find_And_Bookmark_pat");  // get the last search pattern if any
+selsize=GetSelSize();
+
+if(selsize>0){
+selstart=GetSelStart();
+}
+
+method =InputRadioButtonBox("Search Method","Choose search method",0,"Standard","Wildcards","Regular Expression");
+
+if (method==-1){Warning("Canceled"); return;}
+
+pattern= InputString("Search","Input pattern",lastpat);
+if (pattern=="") {Warning("Canceled");return;}
+
+SIZE=InputNumber("Where to search     (Cancel if search anywhere)","At the beginning of the block of size ?","512");
+
+if (SIZE==BAD_VALUE){StatusMessage("Searching anywhere");}
+
+
+bkname= InputString("Bookmark name","Bookmark name:","Found");
+if (bkname=="") {Warning("Canceled");return;}
+
+SetEnv("010Ed_Find_And_Bookmark_pat",pattern);
+
+Fr=FindAll(pattern ,matchcase,false,method,0.0,1,selstart,selsize,24);
+ 
+ for (i=0;i<Fr.count;i++)
+    {
+
+    if (SIZE!=BAD_VALUE)
+    {
+        if(Fr.start[i]%SIZE==0){
+           AddBookmark(Fr.start[i],bkname,"char",Fr.size[i],fgcolor, bgcolor);
+           counter++;
+          } 
+    }
+    else{
+     AddBookmark(Fr.start[i],bkname,"char",Fr.size[i],fgcolor, bgcolor);
+     counter++;
+        }
+ }
+if (selsize==0){MessageBox( idOk,"Result", "Found: %u positions.    ",counter);}
+  else
+  {MessageBox( idOk,"Result", "Found: %u positions    \n\nin the selection:\nstart: %.8Xh\n size: %.8Xh\n",counter,selstart,selsize);}
+
+//---------end------

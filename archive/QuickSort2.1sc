@@ -1,0 +1,114 @@
+//------------------------------------------------
+//--- 010 Editor v8.0.1 Script File
+//
+//      File: QuickSort2.1sc
+//   Authors: Artur Babecki
+//    E-mail: artur.babecki@gmail.com
+//   Version: 1.0
+//   Purpose: The variant of the quicksort function for the numerical arrays.
+//            Keeps  information about the original indexes
+//            in the separate table.
+//            Allows to sort the fragment of the array.
+//  Category: Utility
+//  History: 
+//   1.0   2018-05-20 Artur Babecki: Initial release.
+//------------ begin of the example ----------------------------
+#define A_TYPE int   // type of array we use
+
+A_TYPE array[13]={77,61,12,15,-92,3,23,5,12,2,4,13,4};
+int array_size;
+// the line below calculates the size of array basing on the type
+array_size=sizeof(array)/sizeof(A_TYPE);  
+int indx[array_size];
+
+int i;
+
+Printf("\nQuickSort2() example:\n\n");
+// show the original array
+Printf("The original array: \n");
+
+Printf("Size of the array %d\n",array_size);
+// if you want to experiment with the other than int data types
+// change the Printf format string to the proper format.
+for(i=0 ; i<array_size ; i++)
+ {Printf("array[%.2u] = %d \n",i,array[i]  ); }
+// ------------------------
+// init indx
+for(i=0 ; i<array_size ; i++)  {indx[i]=i;}
+//--------------------------
+//  do sort
+QuickSort2(array,indx,0,array_size-1);
+//QuickSort2(array,indx,4,9);  example for sortng the fragment
+
+// show the sorted array with info about the original indexes
+Printf("\n");
+Printf("The sorted Array is:\n");
+ 
+ for(i=0 ; i<array_size ; i++)
+ {
+  Printf("array[%.2u] = %d\twas:  array[%.2d] \n",i, array[i],indx[i]);
+ }
+//---------- end of the example ----------------------------------
+
+//-------------------------------------------------------- 
+// quick_sort2  quicksort function for the array of integer numbers.
+// For other numerical data types - change the type of
+// array[], temp and temp1
+//
+// arguments:
+// array[] -  array to be sorted
+// indx [] -  array of indexes. The purpose of this is to keep 
+//            information about original indexes of the sorted array items.
+//            It shall be initialized like this:
+//            n=sizeof(array)/sizeof(A_INT);
+//            for(i=0 ; i<arraysize ; i++)  { indx[i]=i; }//              }
+//            size of  indx[] shall be equal to the size of array[]
+// low ,high - the lower and upper index of the part of array to be sorted.
+//
+//  A_TYPE  -   #define A_TYPE int   (char/int/int64 etc)
+//              used to set the type of the array
+// Based on :
+// http://www.codingbot.net/2013/01/quick-sort-algorithm-and-c-code.html
+//
+void QuickSort2(A_TYPE array[],int indx[],int low,int high)
+{
+A_TYPE temp;
+A_TYPE temp1;
+  
+int pivot,j,i;
+ if(low < high)
+ {
+  pivot = low;
+  i = low;
+  j = high;
+
+  while(i<j)
+  {
+   while((array[i]<=array[pivot])&&(i<high))
+    { i++; }
+ 
+   while(array[j]>array[pivot])
+      { j--; }
+ 
+   if(i<j)
+       {
+        temp=array[i];
+        array[i]=array[j];
+        array[j]=temp;
+        temp1=indx[i];
+        indx[i]=indx[j];
+        indx[j]=temp1;
+       }
+  }
+ 
+  temp=array[pivot];
+  array[pivot]=array[j];
+  array[j]=temp;
+  temp1=indx[pivot];
+  indx[pivot]=indx[j];
+  indx[j]=temp1;
+  QuickSort2(array,indx,low,j-1);
+  QuickSort2(array,indx,j+1,high);
+ }
+}
+//-------------------------------------------

@@ -1,0 +1,32 @@
+//------------------------------------------------
+//--- 010 Editor v7.0.2 Script File
+//
+//      File: CopyAsHex.1sc
+//   Authors: feicong
+//    E-mail: 346345565@qq.com
+//   WeChat:  feicongcn
+//   Version: 1.0
+//   Purpose: Copy selected hex bytes as hexstring.
+//            Note that this functionality is built into 010 Editor
+//            using 'Copy > Copy As > Copy as Hex Text'.
+//  Category: Clipboard
+//   History: 
+//      1.0   2017-07-13 feicong: Initial release.
+//------------------------------------------------
+
+int64 sel_pos = GetSelStart();
+int64 sel_n = GetSelSize();
+//Printf("pos:%ld, sz:%ld\n", sel_pos, sel_n);
+if (sel_n > 0) {
+    string s, tmp_s;
+    uchar tmp[sel_n];
+    ReadBytes(tmp, sel_pos, sel_n);
+    int32 i;
+    for (i = 0; i < sel_n; i++) {
+        SPrintf(tmp_s, "%02x", tmp[i]);
+        s += tmp_s;
+    }
+    Printf("%s\n", s);
+    CopyStringToClipboard(s);
+    Printf("Done.\n");
+}

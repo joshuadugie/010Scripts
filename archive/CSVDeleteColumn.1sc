@@ -1,0 +1,70 @@
+//------------------------------------------------
+//--- 010 Editor v7.0.1 Script File
+//
+//      File: CSVDeleteColumn.1sc
+//   Authors: SweetScape Software
+//   Version: 1.0
+//   Purpose: Deletes one column of data in a CSV file.
+//            The column to delete is entered with an 
+//            input box (1 is the first column).
+//  Category: Text
+//   History: 
+//   1.0   2016-08-15 SweetScape Software: Initial release.
+//------------------------------------------------
+
+// Which separator to look for
+const char SEPARATOR = ',';
+
+// Do not look for separators inside quotes
+const char QUOTE     = '"';
+
+// Get the column to delete
+int targetColumn = InputNumber( GetScriptName(), "Enter which column to delete (1 is the first column):", "" );
+if( targetColumn == BAD_VALUE || targetColumn <= 0 )
+    return -1;
+targetColumn--;
+
+// Iterate through the lines in the file
+int64 line, count, numLines = TextGetNumLines();
+int   lastPos, pos, i, len, column, inQuotes;
+const int MAX_SIZE = 8096;
+char buffer[ MAX_SIZE+1 ];
+for( line = 0; line < numLines; line++ )
+{
+    // Read the line
+    TextReadLine( buffer, line, MAX_SIZE, false );
+    len = Strlen( buffer );
+
+    // Iterate through to find the column
+    lastPos = column = inQuotes = 0;
+    for( pos = 0; pos < len; pos++ )
+    {
+        if( buffer[pos] == QUOTE )
+        {
+            // Do not look for separators inside quotes
+            inQuotes = !inQuotes;
+        }
+        else if( (buffer[pos] == SEPARATOR) && !inQuotes )
+        {
+            // Hit a separator - check if we are at the right column else keep going
+            if( column == targetColumn )
+                break;
+            else
+            {
+                lastPos = pos+1;
+                column++;
+            }
+        }
+    }
+
+    // Delete the bytes
+    if( (column == targetColumn) && (pos > lastPos) )
+    {
+        DeleteBytes( TextLineToAddress(line) + lastPos, pos-lastPos+1 );
+        count++;
+    }
+}
+
+// Show final message
+StatusMessage( "Deleted data from %d lines", count );
+

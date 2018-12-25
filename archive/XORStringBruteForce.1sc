@@ -1,0 +1,46 @@
+//------------------------------------------------
+//--- 010 Editor v7.0 Script File
+//
+//      File: XORStringBruteForce.1sc
+//   Authors: Jeff White
+//   Version: 1.0
+//   Purpose: Brute forces 1-byte XOR keys looking for a string. Default is part of PE header.
+//  Category: Search
+//   History: 
+//      1.0 2016-12-08 karttoon : Initial release.
+//
+// http://ropgadget.com
+// @noottrak
+//------------------------------------------------
+
+int xorSearch(string xSearch)
+{
+    TFindResults xResult = FindAll(xSearch);
+    return xResult.count;
+}
+
+void Main(void)
+{
+    string xSearch;
+    xSearch = InputString("Search String", "Enter search string:", "This program cannot be run in DOS mode");
+    ubyte xByte, xKey;
+    uint xCount, xSize, xResult;   
+    xCount = 0;
+    xSize = FileSize();
+    uchar baseBuffer[xSize], xorBuffer[xSize];
+    ReadBytes(baseBuffer, xCount, xSize);            
+    for( xKey = 0; xKey < 255; xKey++) {
+        Memcpy( xorBuffer, baseBuffer, xSize );
+        HexOperation(HEXOP_BINARY_XOR, 0, xSize, xKey);
+        xResult = xorSearch(xSearch);
+        if( xResult > 0 ) {
+            Printf("Found string with XOR Key: %02X\n", xKey);
+            MessageBox( idOk, "XOR Key", "Found string with XOR Key: %02X", xKey );
+            break;
+        } else {
+            HexOperation(HEXOP_BINARY_XOR, 0, xSize, xKey);
+        }
+    }
+}
+
+Main();

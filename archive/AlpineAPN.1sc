@@ -1,0 +1,117 @@
+//------------------------------------------------
+//--- 010 Editor v6.0.3 Script File
+//
+//      File: AlpineAPN.1sc
+//   Authors: JP2EN Limited
+//   Version: 0.4
+//   Purpose: Convert BMP graphics to
+//            use as a backgroung picture in
+//            ALPINE iDA-X001 receiver.
+//            320x240 16bit 5-6-5 RGB color
+//            file required.
+//            Destination file should be saved
+//            with *.apn extension
+//  Category: Format Specific
+//   History: 
+//   0.4  2018-03-01 JP2EN Limited: Initial release.
+//------------------------------------------------
+RequiresVersion( 4.0 );
+RequiresFile();
+LittleEndian();
+
+  ushort bfType,  biBitCount, color, sym, rgb[153600], column = 320;
+  long pos, biWidth, biHeight;
+  char addr[], number[], cs[];
+  uchar endian = 1, sum = 0, summ = 0;
+  int  i = 153738-320*2, rgbCount = 0;
+
+  if( FileSize() != 153738 ) {
+    MessageBox ( idOk, GetScriptName(), "Wrong file size" );
+    return -1;
+  }
+
+  bfType     = ReadShort( 0 );
+  biWidth    = ReadInt  ( 18 );
+  biHeight   = ReadInt  ( 22 );
+  biBitCount = ReadShort( 28 );
+
+  if( bfType != 0x4D42 ) {
+    MessageBox ( idOk, GetScriptName(), "Wrong file type" );
+    return -1;
+  }
+  if( biWidth != 320) {
+    MessageBox ( idOk, GetScriptName(), "Wrong picture width" );
+    return -1;
+  }
+  if( biHeight != 240) {
+    MessageBox ( idOk, GetScriptName(), "Wrong picture height" );
+    return -1;
+  }
+  if( biBitCount != 16) {
+    MessageBox ( idOk, GetScriptName(), "Wrong picture color depth" );
+    return -1;
+  }
+
+  while ( i>=138 ) {
+    sym = ReadByte( i++ );
+
+    if (endian)
+      color = sym & 0xFF;
+    else {
+      color |= sym<<8;
+      rgb[ rgbCount++ ] = color;
+
+      if ( --column ) {}
+      else {
+        column = 320;
+        i -= 320*4;
+      }
+    }
+    endian = 1-endian;
+  }
+
+  FileNew( "Text", 1);
+  WriteString( 0, "S00E000052474250414C202061706EBA" );
+  WriteShort ( 32, 0x0A0D );
+
+  for( pos = 0; pos < 4800; pos++ ) {
+    SPrintf( addr, "S325086%05X", pos * 32 );
+    WriteString( 34 + pos * 80, addr );
+    sum = 0;
+
+    for( i = 0; i < 16; i++ ) {
+      color  = rgb[ pos*16 + i ];
+      SPrintf( number, "%04X", color );
+      WriteString( 46 + pos * 80 + i * 4, number );
+      sum  += ( color & 0xFF00) >>8;
+      sum  += ( color & 0xFF);
+    }
+
+    summ += sum;
+    sum = 0x92 - getindex( pos * 32 ) - sum - 32;
+    SPrintf( cs, "%02X\r\n", sum);
+    WriteString( 110 + pos * 80, cs );
+  }
+
+  sum  = 0x92 - getindex( pos * 32 ) - ( 0xFF - summ + 1 );
+  summ = 0xFF - summ;
+  WriteString( 384034, "S30608625800" );
+  SPrintf( cs, "%02X", summ );
+  WriteString( 384046, cs );
+  SPrintf( cs, "%02X\r\n", sum );
+  WriteString( 384048, cs );
+  WriteString( 384052, "S705860000074" );
+  WriteShort ( 384065, 0x0A0D );
+
+uchar getindex(uint v_pos) {
+  uint division;
+  division = v_pos;
+
+  while(division > 0x100)
+    division = (division / 0x100) % 0x100;
+
+  if((division > (v_pos % 0xFF)) && (v_pos != division))
+    return (v_pos % 0xFF) - 1;
+  else
+    return (v_pos % 0xFF);
+}

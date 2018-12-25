@@ -1,0 +1,77 @@
+//------------------------------------------------
+//--- 010 Editor v8.0.1 Script File
+//
+//      File: BracketMatch.1sc
+//   Authors: Artur Babecki
+//    E-mail: artur.babecki@gmail.com
+//   Version: 0.1
+//   Purpose: Finds the matching bracket("{}()[]"), selects
+//            the matched block. When the ending bracket is not found
+//            gives information about the number lacking brackets and sets
+//            the cursor at the last unbalanced bracket found.
+//            Note: For editing the 010 script or template  you shall to use
+//                  the "Edit as text" instead as "Edit as script/template"
+//                  to be able to use this script (010Editor v8.01). 
+//  Category: Text
+//  History:
+//   0.1   2018-05-18 Artur Babecki: Initial release
+//  
+//------------------------------------------------
+
+char c,c1,c2;
+int count; 
+int64 pos,px,i;
+int64 size; //file size
+int f; //flag
+int k; //direction
+
+pos=GetCursorPos();
+size=FileSize();
+
+c1=ReadUByte (pos);
+
+switch (c1)  // "{}()[]"  configure action
+{
+// if you need additional "brackets"  set your pairs here
+//  
+    case '{' : c2='}';f=0; break;
+    case '(' : c2=')'; f=0; break;
+    case '[' : c2=0x5d;f=0; break;
+  
+    case '}' : c2='{';f=1; break;
+    case ')' : c2='('; f=1; break;
+    case ']' : c2='[';f=1; break;
+    default: Printf("\nNo bracket under cursor.\nNothing to do.\n"); return; // no "{}()[]"
+}
+
+count=1;
+//search direction
+if (f==0){k=1;}
+   else  {k=-1;}
+
+for (i=pos;(i<size) && (i>0);i=i+k){
+
+    c=ReadUByte (i);
+    if (c==c1) {count++;px=i;}
+ 
+     else {
+        if (c==c2) { 
+            count--;// px=i;
+         if (count==1){
+           SetCursorPos(i);
+
+            if (f==0){SetSelection(pos,i-pos+1);}
+              else {SetSelection(i,pos-i+1);}
+
+            return;
+          }
+        }
+      }
+
+} //end of "for" loop
+
+if(f==1){ px=px-1;}
+SetCursorPos(px+1);
+Printf("\nLack of %d '%c' \n",count-1,c2);
+
+//----------------------------------------
